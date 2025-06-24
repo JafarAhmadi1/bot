@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامک آزمایشی ایتا</title>
+    <title>پویش پرچم بالا</title>
     
-    <!-- مرحله 1: اتصال اسکریپت اصلی ایتا -->
-    <!-- این اسکریپت باید حتما قبل از همه اسکریپت‌های دیگر باشد -->
+    <!-- اتصال اسکریپت اصلی ایتا -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
-        /* استفاده از متغیرهای رنگی که ایتا فراهم می‌کند */
+        /* استفاده از متغیرهای رنگی ایتا برای هماهنگی با تم */
         :root {
             --bg-color: var(--tg-theme-bg-color, #ffffff);
             --text-color: var(--tg-theme-text-color, #000000);
@@ -44,97 +43,232 @@
             font-size: 16px;
             color: var(--hint-color);
         }
-
-        #user-info {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .button {
+        
+        /* استایل برای دکمه آپلود و قاب‌ها */
+        .action-button {
             display: inline-block;
-            padding: 10px 20px;
-            margin-top: 15px;
+            padding: 12px 25px;
+            margin-top: 20px;
             border: none;
             border-radius: 8px;
             background-color: var(--button-color);
             color: var(--button-text-color);
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
+        .action-button:hover {
+            opacity: 0.9;
+        }
+
+        #frame-selection button {
+            margin: 5px;
+        }
+        
+        /* مخفی کردن ورودی فایل اصلی */
+        #image-upload {
+            display: none;
+        }
+        
+        /* استایل برای canvas و نتیجه نهایی */
+        #image-canvas {
+            display: none; /* در حالت عادی مخفی است */
+        }
+
+        #result-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: var(--secondary-bg-color);
+            border-radius: 12px;
+        }
+
+        #result-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid var(--hint-color);
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🎉 به برنامک من خوش آمدید!</h1>
-        <p>این یک نمونه ساده برای نمایش قابلیت‌های برنامک ایتا است.</p>
+        <h1>🇮🇷 پویش پرچم بالا</h1>
+        <p>برای حمایت از ایران، تصویر خود را با پرچم سه رنگ کشورمان تزئین کنید.</p>
         
-        <div id="user-info">
-            در حال بارگذاری اطلاعات کاربر...
+        <!-- مرحله ۱: دکمه برای انتخاب عکس -->
+        <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
+        <input type="file" id="image-upload" accept="image/*">
+
+        <!-- مرحله ۲: انتخاب قاب (در ابتدا مخفی است) -->
+        <div id="frame-selection" style="display: none;">
+            <p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>
+            <!-- دکمه‌های قاب به صورت داینامیک اینجا اضافه می‌شوند -->
         </div>
 
-        <button class="button" id="change-header-btn">تغییر رنگ هدر</button>
-        <button class="button" id="show-confirm-btn">نمایش پیام تایید</button>
+        <!-- نمایش وضعیت پردازش -->
+        <div id="status"></div>
+
+        <!-- مرحله ۳: نمایش نتیجه (در ابتدا مخفی است) -->
+        <div id="result-container" style="display: none;">
+            <h3>تصویر شما آماده شد!</h3>
+            <!-- بوم نقاشی برای ترکیب تصاویر (مخفی) -->
+            <canvas id="image-canvas"></canvas>
+            <!-- پیش‌نمایش تصویر نهایی -->
+            <img id="result-image" alt="تصویر نهایی با قاب">
+            <!-- دکمه دانلود -->
+            <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
+        </div>
 
     </div>
 
     <script>
-        // اطمینان از اینکه اسکریپت بعد از بارگذاری کامل صفحه اجرا شود
+        // مقادیر ثابت برای آدرس قاب‌ها
+        const FRAME_IMAGE_URLS = {
+            frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
+            frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
+            frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
+        };
+        
+        // اجرای کد بعد از بارگذاری کامل صفحه
         document.addEventListener('DOMContentLoaded', function() {
             try {
-                // دسترسی به آبجکت اصلی API ایتا
+                // دسترسی به API ایتا
                 const EitaaApp = window.Eitaa.WebApp;
-
-                // مرحله 2: به ایتا اعلام می‌کنیم که برنامک آماده نمایش است
                 EitaaApp.ready();
 
-                // مرحله 3: نمایش اطلاعات کاربر (از نسخه ناامن برای نمایش در کلاینت)
-                if (EitaaApp.initDataUnsafe && EitaaApp.initDataUnsafe.user) {
-                    const user = EitaaApp.initDataUnsafe.user;
-                    const userInfoDiv = document.getElementById('user-info');
-                    // اگر نام خانوادگی وجود داشت، آن را هم نمایش بده
-                    const lastName = user.last_name ? ' ' + user.last_name : '';
-                    userInfoDiv.innerText = `سلام، ${user.first_name}${lastName}!`;
-                } else {
-                    document.getElementById('user-info').innerText = 'اطلاعات کاربر در دسترس نیست.';
-                }
-                
-                // مرحله 4: کار با دکمه اصلی (MainButton)
-                // تنظیم متن و نمایش دکمه
-                EitaaApp.MainButton.setText('ارسال به ایتا');
-                EitaaApp.MainButton.show();
-                
-                // تعریف رویداد برای کلیک روی دکمه اصلی
-                EitaaApp.MainButton.onClick(() => {
-                    EitaaApp.showAlert(`دکمه اصلی با موفقیت فشرده شد!`);
-                    // می‌توانید در اینجا اطلاعات را به سرور بفرستید یا برنامک را ببندید
-                    // EitaaApp.close();
-                });
-
-                // مرحله 5: کار با دکمه‌های داخل صفحه وب
-                const changeHeaderBtn = document.getElementById('change-header-btn');
-                changeHeaderBtn.addEventListener('click', () => {
-                    // یک رنگ تصادفی می‌سازیم
-                    const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-                    EitaaApp.setHeaderColor(randomColor);
-                });
-                
-                const showConfirmBtn = document.getElementById('show-confirm-btn');
-                showConfirmBtn.addEventListener('click', () => {
-                    // نمایش یک پاپ‌آپ تایید
-                    EitaaApp.showConfirm("آیا از انجام این کار مطمئن هستید؟", (confirmed) => {
-                        if (confirmed) {
-                            EitaaApp.showAlert("شما دکمه تایید را زدید.");
-                        } else {
-                            EitaaApp.showAlert("شما عملیات را لغو کردید.");
-                        }
-                    });
-                });
+                // تنظیم دکمه اصلی برای شروع مجدد
+                EitaaApp.MainButton.setText("شروع مجدد");
+                EitaaApp.MainButton.onClick(resetApp);
 
             } catch (error) {
-                // اگر خارج از ایتا باز شود، این خطا رخ می‌دهد
-                document.body.innerHTML = `<h1>خطا</h1><p>این صفحه باید از داخل اپلیکیشن ایتا باز شود.</p><p style="font-size:12px; color: #ff0000;">${error}</p>`;
+                console.log("در حال اجرا خارج از محیط ایتا");
+            }
+
+            // دریافت عناصر HTML
+            const uploadInput = document.getElementById('image-upload');
+            const uploadButton = document.getElementById('upload-button');
+            const frameSelectionDiv = document.getElementById('frame-selection');
+            const statusDiv = document.getElementById('status');
+            const resultContainer = document.getElementById('result-container');
+            const canvas = document.getElementById('image-canvas');
+            const resultImage = document.getElementById('result-image');
+            const downloadLink = document.getElementById('download-link');
+            
+            let userImageObjectUrl = null;
+
+            // رویداد برای زمانی که کاربر یک فایل را انتخاب می‌کند
+            uploadInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // ایجاد یک URL محلی برای تصویر انتخاب شده
+                if (userImageObjectUrl) {
+                    URL.revokeObjectURL(userImageObjectUrl);
+                }
+                userImageObjectUrl = URL.createObjectURL(file);
+
+                // نمایش بخش انتخاب قاب
+                showFrameSelection();
+                
+                // مخفی کردن دکمه آپلود و نمایش پیام
+                uploadButton.style.display = 'none';
+                statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
+            });
+
+            // تابع برای نمایش دکمه‌های انتخاب قاب
+            function showFrameSelection() {
+                frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
+                Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
+                    const button = document.createElement('button');
+                    button.innerText = `🖼️ قاب ${index + 1}`;
+                    button.className = 'action-button';
+                    button.onclick = () => {
+                        // غیرفعال کردن دکمه‌ها برای جلوگیری از کلیک مجدد
+                        frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                        statusDiv.innerText = "⏳ در حال ساخت تصویر شما... لطفاً صبر کنید.";
+                        createFramedImage(userImageObjectUrl, FRAME_IMAGE_URLS[key]);
+                    };
+                    frameSelectionDiv.appendChild(button);
+                });
+                frameSelectionDiv.style.display = 'block';
+            }
+            
+            // تابع اصلی برای ترکیب عکس و قاب با استفاده از Canvas
+            async function createFramedImage(userImageUrl, frameUrl) {
+                const ctx = canvas.getContext('2d');
+                
+                // تابع کمکی برای بارگذاری یک تصویر و برگرداندن آن به صورت Promise
+                const loadImage = (src) => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        // این خط برای جلوگیری از خطای CORS ضروری است
+                        img.crossOrigin = "Anonymous"; 
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = src;
+                    });
+                };
+                
+                try {
+                    // بارگذاری هر دو تصویر به صورت همزمان
+                    const [userImg, frameImg] = await Promise.all([
+                        loadImage(userImageUrl),
+                        loadImage(frameUrl)
+                    ]);
+                    
+                    // تنظیم اندازه بوم (canvas)
+                    const size = 512;
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    // 1. رسم تصویر کاربر در پس‌زمینه
+                    ctx.drawImage(userImg, 0, 0, size, size);
+
+                    // 2. رسم قاب روی تصویر کاربر
+                    ctx.drawImage(frameImg, 0, 0, size, size);
+
+                    // 3. نمایش نتیجه نهایی
+                    const finalImageDataUrl = canvas.toDataURL('image/png');
+                    resultImage.src = finalImageDataUrl;
+                    downloadLink.href = finalImageDataUrl;
+                    
+                    // نمایش بخش نتیجه و مخفی کردن مراحل قبل
+                    frameSelectionDiv.style.display = 'none';
+                    statusDiv.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                    
+                    // نمایش دکمه "شروع مجدد" در ایتا
+                    window.Eitaa.WebApp.MainButton.show();
+
+                } catch (error) {
+                    statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
+                    console.error("Image loading error:", error);
+                }
+            }
+
+            // تابع برای ریست کردن برنامه و شروع مجدد
+            function resetApp() {
+                uploadButton.style.display = 'inline-block';
+                frameSelectionDiv.style.display = 'none';
+                frameSelectionDiv.innerHTML = '';
+                resultContainer.style.display = 'none';
+                statusDiv.style.display = 'block';
+                statusDiv.innerText = '';
+                uploadInput.value = ''; // ریست کردن ورودی فایل
+                if (userImageObjectUrl) {
+                    URL.revokeObjectURL(userImageObjectUrl);
+                    userImageObjectUrl = null;
+                }
+                // مخفی کردن دکمه اصلی ایتا
+                window.Eitaa.WebApp.MainButton.hide();
             }
         });
     </script>
