@@ -2,17 +2,141 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>برنامک آزمایشی ایتا</title>
+    
+    <!-- مرحله 1: اتصال اسکریپت اصلی ایتا -->
+    <!-- این اسکریپت باید حتما قبل از همه اسکریپت‌های دیگر باشد -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
-    <title>صفحه شخصی من</title>
+
     <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-        h1 { color: #333; }
-        p { color: #666; }
+        /* استفاده از متغیرهای رنگی که ایتا فراهم می‌کند */
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #ffffff);
+            --text-color: var(--tg-theme-text-color, #000000);
+            --hint-color: var(--tg-theme-hint-color, #999999);
+            --button-color: var(--tg-theme-button-color, #3390ec);
+            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+            --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 16px;
+            color: var(--hint-color);
+        }
+
+        #user-info {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--button-color);
+            color: var(--button-text-color);
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h1>سلام به شما</h1>
-    <p>این اولین صفحه وب من است که روی گیت‌هاب میزبانی می‌شود.</p>
-    <p>این صفحه از طریق ایتا به اشتراک گذاشته شده است.</p>
+
+    <div class="container">
+        <h1>🎉 به برنامک من خوش آمدید!</h1>
+        <p>این یک نمونه ساده برای نمایش قابلیت‌های برنامک ایتا است.</p>
+        
+        <div id="user-info">
+            در حال بارگذاری اطلاعات کاربر...
+        </div>
+
+        <button class="button" id="change-header-btn">تغییر رنگ هدر</button>
+        <button class="button" id="show-confirm-btn">نمایش پیام تایید</button>
+
+    </div>
+
+    <script>
+        // اطمینان از اینکه اسکریپت بعد از بارگذاری کامل صفحه اجرا شود
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // دسترسی به آبجکت اصلی API ایتا
+                const EitaaApp = window.Eitaa.WebApp;
+
+                // مرحله 2: به ایتا اعلام می‌کنیم که برنامک آماده نمایش است
+                EitaaApp.ready();
+
+                // مرحله 3: نمایش اطلاعات کاربر (از نسخه ناامن برای نمایش در کلاینت)
+                if (EitaaApp.initDataUnsafe && EitaaApp.initDataUnsafe.user) {
+                    const user = EitaaApp.initDataUnsafe.user;
+                    const userInfoDiv = document.getElementById('user-info');
+                    // اگر نام خانوادگی وجود داشت، آن را هم نمایش بده
+                    const lastName = user.last_name ? ' ' + user.last_name : '';
+                    userInfoDiv.innerText = `سلام، ${user.first_name}${lastName}!`;
+                } else {
+                    document.getElementById('user-info').innerText = 'اطلاعات کاربر در دسترس نیست.';
+                }
+                
+                // مرحله 4: کار با دکمه اصلی (MainButton)
+                // تنظیم متن و نمایش دکمه
+                EitaaApp.MainButton.setText('ارسال به ایتا');
+                EitaaApp.MainButton.show();
+                
+                // تعریف رویداد برای کلیک روی دکمه اصلی
+                EitaaApp.MainButton.onClick(() => {
+                    EitaaApp.showAlert(`دکمه اصلی با موفقیت فشرده شد!`);
+                    // می‌توانید در اینجا اطلاعات را به سرور بفرستید یا برنامک را ببندید
+                    // EitaaApp.close();
+                });
+
+                // مرحله 5: کار با دکمه‌های داخل صفحه وب
+                const changeHeaderBtn = document.getElementById('change-header-btn');
+                changeHeaderBtn.addEventListener('click', () => {
+                    // یک رنگ تصادفی می‌سازیم
+                    const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                    EitaaApp.setHeaderColor(randomColor);
+                });
+                
+                const showConfirmBtn = document.getElementById('show-confirm-btn');
+                showConfirmBtn.addEventListener('click', () => {
+                    // نمایش یک پاپ‌آپ تایید
+                    EitaaApp.showConfirm("آیا از انجام این کار مطمئن هستید؟", (confirmed) => {
+                        if (confirmed) {
+                            EitaaApp.showAlert("شما دکمه تایید را زدید.");
+                        } else {
+                            EitaaApp.showAlert("شما عملیات را لغو کردید.");
+                        }
+                    });
+                });
+
+            } catch (error) {
+                // اگر خارج از ایتا باز شود، این خطا رخ می‌دهد
+                document.body.innerHTML = `<h1>خطا</h1><p>این صفحه باید از داخل اپلیکیشن ایتا باز شود.</p><p style="font-size:12px; color: #ff0000;">${error}</p>`;
+            }
+        });
+    </script>
 </body>
 </html>
