@@ -9,7 +9,6 @@
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
-        /* استفاده از متغیرهای رنگی ایتا برای هماهنگی با تم */
         :root {
             --bg-color: var(--tg-theme-bg-color, #ffffff);
             --text-color: var(--tg-theme-text-color, #000000);
@@ -44,11 +43,10 @@
             color: var(--hint-color);
         }
         
-        /* استایل برای دکمه آپلود و قاب‌ها */
         .action-button {
             display: inline-block;
             padding: 12px 25px;
-            margin-top: 20px;
+            margin-top: 15px;
             border: none;
             border-radius: 8px;
             background-color: var(--button-color);
@@ -57,6 +55,9 @@
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
+            text-decoration: none; /* برای تگ <a> */
+            margin-left: 5px;
+            margin-right: 5px;
         }
         .action-button:hover {
             opacity: 0.9;
@@ -66,14 +67,12 @@
             margin: 5px;
         }
         
-        /* مخفی کردن ورودی فایل اصلی */
         #image-upload {
             display: none;
         }
         
-        /* استایل برای canvas و نتیجه نهایی */
         #image-canvas {
-            display: none; /* در حالت عادی مخفی است */
+            display: none;
         }
 
         #result-container {
@@ -93,6 +92,7 @@
         #status {
             margin-top: 15px;
             font-weight: bold;
+            min-height: 24px; /* برای جلوگیری از پرش صفحه */
         }
 
     </style>
@@ -110,7 +110,6 @@
         <!-- مرحله ۲: انتخاب قاب (در ابتدا مخفی است) -->
         <div id="frame-selection" style="display: none;">
             <p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>
-            <!-- دکمه‌های قاب به صورت داینامیک اینجا اضافه می‌شوند -->
         </div>
 
         <!-- نمایش وضعیت پردازش -->
@@ -119,40 +118,36 @@
         <!-- مرحله ۳: نمایش نتیجه (در ابتدا مخفی است) -->
         <div id="result-container" style="display: none;">
             <h3>تصویر شما آماده شد!</h3>
-            <!-- بوم نقاشی برای ترکیب تصاویر (مخفی) -->
             <canvas id="image-canvas"></canvas>
-            <!-- پیش‌نمایش تصویر نهایی -->
             <img id="result-image" alt="تصویر نهایی با قاب">
-            <!-- دکمه دانلود -->
-            <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
+            <div>
+                <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
+                <!-- دکمه جدید برای شروع مجدد -->
+                <button id="restart-button" class="action-button">شروع مجدد</button>
+            </div>
         </div>
 
     </div>
 
     <script>
-        // مقادیر ثابت برای آدرس قاب‌ها
         const FRAME_IMAGE_URLS = {
             frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
             frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
             frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
         };
         
-        // اجرای کد بعد از بارگذاری کامل صفحه
         document.addEventListener('DOMContentLoaded', function() {
+            let EitaaApp;
+            let isEitaaEnv = false;
+
             try {
-                // دسترسی به API ایتا
-                const EitaaApp = window.Eitaa.WebApp;
+                EitaaApp = window.Eitaa.WebApp;
                 EitaaApp.ready();
-
-                // تنظیم دکمه اصلی برای شروع مجدد
-                EitaaApp.MainButton.setText("شروع مجدد");
-                EitaaApp.MainButton.onClick(resetApp);
-
+                isEitaaEnv = true;
             } catch (error) {
                 console.log("در حال اجرا خارج از محیط ایتا");
             }
 
-            // دریافت عناصر HTML
             const uploadInput = document.getElementById('image-upload');
             const uploadButton = document.getElementById('upload-button');
             const frameSelectionDiv = document.getElementById('frame-selection');
@@ -161,37 +156,42 @@
             const canvas = document.getElementById('image-canvas');
             const resultImage = document.getElementById('result-image');
             const downloadLink = document.getElementById('download-link');
+            const restartButton = document.getElementById('restart-button'); // دکمه جدید
             
             let userImageObjectUrl = null;
 
-            // رویداد برای زمانی که کاربر یک فایل را انتخاب می‌کند
-            uploadInput.addEventListener('change', (event) => {
+            // اتصال رویدادها
+            uploadInput.addEventListener('change', handleImageUpload);
+            restartButton.addEventListener('click', resetApp);
+            
+            // اگر در محیط ایتا هستیم، دکمه اصلی را هم تنظیم کن
+            if (isEitaaEnv) {
+                EitaaApp.MainButton.setText("شروع مجدد");
+                EitaaApp.MainButton.onClick(resetApp);
+                EitaaApp.MainButton.hide(); // در ابتدا مخفی باشد
+            }
+
+            function handleImageUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
                 
-                // ایجاد یک URL محلی برای تصویر انتخاب شده
-                if (userImageObjectUrl) {
-                    URL.revokeObjectURL(userImageObjectUrl);
-                }
+                if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
                 userImageObjectUrl = URL.createObjectURL(file);
 
-                // نمایش بخش انتخاب قاب
                 showFrameSelection();
                 
-                // مخفی کردن دکمه آپلود و نمایش پیام
                 uploadButton.style.display = 'none';
                 statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
-            });
+            }
 
-            // تابع برای نمایش دکمه‌های انتخاب قاب
             function showFrameSelection() {
+                // پاک کردن قاب‌های قبلی
                 frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
                 Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
                     const button = document.createElement('button');
                     button.innerText = `🖼️ قاب ${index + 1}`;
                     button.className = 'action-button';
                     button.onclick = () => {
-                        // غیرفعال کردن دکمه‌ها برای جلوگیری از کلیک مجدد
                         frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
                         statusDiv.innerText = "⏳ در حال ساخت تصویر شما... لطفاً صبر کنید.";
                         createFramedImage(userImageObjectUrl, FRAME_IMAGE_URLS[key]);
@@ -201,74 +201,63 @@
                 frameSelectionDiv.style.display = 'block';
             }
             
-            // تابع اصلی برای ترکیب عکس و قاب با استفاده از Canvas
             async function createFramedImage(userImageUrl, frameUrl) {
                 const ctx = canvas.getContext('2d');
-                
-                // تابع کمکی برای بارگذاری یک تصویر و برگرداندن آن به صورت Promise
-                const loadImage = (src) => {
-                    return new Promise((resolve, reject) => {
-                        const img = new Image();
-                        // این خط برای جلوگیری از خطای CORS ضروری است
-                        img.crossOrigin = "Anonymous"; 
-                        img.onload = () => resolve(img);
-                        img.onerror = reject;
-                        img.src = src;
-                    });
-                };
+                const loadImage = (src) => new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous"; 
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = src;
+                });
                 
                 try {
-                    // بارگذاری هر دو تصویر به صورت همزمان
-                    const [userImg, frameImg] = await Promise.all([
-                        loadImage(userImageUrl),
-                        loadImage(frameUrl)
-                    ]);
+                    const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
                     
-                    // تنظیم اندازه بوم (canvas)
                     const size = 512;
                     canvas.width = size;
                     canvas.height = size;
-
-                    // 1. رسم تصویر کاربر در پس‌زمینه
                     ctx.drawImage(userImg, 0, 0, size, size);
-
-                    // 2. رسم قاب روی تصویر کاربر
                     ctx.drawImage(frameImg, 0, 0, size, size);
 
-                    // 3. نمایش نتیجه نهایی
                     const finalImageDataUrl = canvas.toDataURL('image/png');
                     resultImage.src = finalImageDataUrl;
                     downloadLink.href = finalImageDataUrl;
                     
-                    // نمایش بخش نتیجه و مخفی کردن مراحل قبل
                     frameSelectionDiv.style.display = 'none';
                     statusDiv.style.display = 'none';
                     resultContainer.style.display = 'block';
                     
-                    // نمایش دکمه "شروع مجدد" در ایتا
-                    window.Eitaa.WebApp.MainButton.show();
-
+                    if (isEitaaEnv) {
+                        EitaaApp.MainButton.show();
+                    }
                 } catch (error) {
                     statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
+                    resetApp(); // در صورت خطا، برنامه را ریست کن
                 }
             }
 
-            // تابع برای ریست کردن برنامه و شروع مجدد
+            // تابع کامل برای ریست کردن برنامه
             function resetApp() {
+                // نمایش و مخفی کردن عناصر
                 uploadButton.style.display = 'inline-block';
                 frameSelectionDiv.style.display = 'none';
-                frameSelectionDiv.innerHTML = '';
                 resultContainer.style.display = 'none';
                 statusDiv.style.display = 'block';
                 statusDiv.innerText = '';
-                uploadInput.value = ''; // ریست کردن ورودی فایل
+                
+                // پاک کردن داده‌های قبلی
+                uploadInput.value = '';
                 if (userImageObjectUrl) {
                     URL.revokeObjectURL(userImageObjectUrl);
                     userImageObjectUrl = null;
                 }
+                
                 // مخفی کردن دکمه اصلی ایتا
-                window.Eitaa.WebApp.MainButton.hide();
+                if (isEitaaEnv) {
+                    EitaaApp.MainButton.hide();
+                }
             }
         });
     </script>
