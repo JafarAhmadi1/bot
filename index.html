@@ -105,6 +105,7 @@
                 EitaaApp.MainButton.hide();
             }
 
+            // ... (توابع handleImageUpload, showFrameSelection, createFramedImage بدون تغییر باقی می‌مانند) ...
             function handleImageUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -168,20 +169,24 @@
                 }
             }
 
-            // --- تابع نهایی برای ذخیره تصویر ---
+
+            // --- تابع نهایی و اصلاح شده برای ذخیره تصویر ---
             function handleSave() {
                 const finalImageDataUrl = canvas.toDataURL('image/png');
                 if (!finalImageDataUrl) return;
 
                 if (isEitaaEnv) {
-                    // در محیط ایتا: لینک صفحه viewer را ساخته و با openLink باز می‌کنیم
+                    // در محیط ایتا: داده را در sessionStorage ذخیره کرده و viewer.html را باز می‌کنیم
                     try {
-                        // ساخت URL کامل به صفحه viewer.html
-                        const viewerPageUrl = new URL('viewer.html', window.location.href).href;
-                        // Data URL را به صورت خام به هش اضافه می‌کنیم
-                        const urlToOpen = viewerPageUrl + '#' + finalImageDataUrl;
+                        // ۱. ذخیره داده تصویر در حافظه موقت مرورگر
+                        sessionStorage.setItem('tempImageData', finalImageDataUrl);
                         
-                        EitaaApp.openLink(urlToOpen);
+                        // ۲. ساخت URL تمیز و کوتاه به صفحه viewer.html
+                        const viewerPageUrl = new URL('viewer.html', window.location.href).href;
+                        
+                        // ۳. باز کردن لینک کوتاه و معتبر
+                        EitaaApp.openLink(viewerPageUrl);
+
                     } catch (e) {
                         alert('خطا در باز کردن لینک: ' + e.message);
                     }
