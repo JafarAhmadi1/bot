@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0;
-            background-color: #2c2c2e; /* یک پس‌زمینه تیره برای نمایش بهتر تصویر */
+            background-color: #2c2c2e;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -32,18 +32,20 @@
     </style>
 </head>
 <body>
-    <img id="display-image" alt="تصویر شما">
+    <img id="display-image" alt="در حال بارگذاری تصویر...">
     <p>برای ذخیره، انگشت خود را روی تصویر نگه دارید.</p>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // خواندن Data URL از هش آدرس
-            const dataUrl = location.hash.substring(1);
+            // خواندن داده تصویر از حافظه موقت مرورگر (sessionStorage)
+            const dataUrl = sessionStorage.getItem('tempImageData');
 
-            if (dataUrl && dataUrl.startsWith('data:image/png')) {
+            if (dataUrl) {
                 document.getElementById('display-image').src = dataUrl;
+                // پاک کردن حافظه پس از استفاده برای جلوگیری از اشغال فضا
+                sessionStorage.removeItem('tempImageData');
             } else {
-                document.body.innerHTML = '<p>خطا: داده تصویر یافت نشد.</p>';
+                document.body.innerHTML = '<p>خطا: داده تصویر یافت نشد. لطفا به ایتا بازگشته و دوباره تلاش کنید.</p>';
             }
         });
     </script>
