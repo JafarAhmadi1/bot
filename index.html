@@ -210,7 +210,7 @@
             function handleSendToEitaa() {
                 const finalImageDataUrl = canvas.toDataURL('image/png');
                 const base64Data = finalImageDataUrl.split(',')[1];
-                alert("خطا در ارسال داده: " + e.message);
+                alert(finalImageDataUrl);
 
                 if (base64Data) {
                     statusDiv.innerText = "درحال ارسال تصویر به ربات...";
