@@ -205,38 +205,66 @@
                 const ctx = canvas.getContext('2d');
                 const loadImage = (src) => new Promise((resolve, reject) => {
                     const img = new Image();
-                    img.crossOrigin = "Anonymous"; 
+                    img.crossOrigin = "Anonymous";
                     img.onload = () => resolve(img);
                     img.onerror = reject;
                     img.src = src;
                 });
-                
+
                 try {
                     const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
-                    
+
                     const size = 512;
                     canvas.width = size;
                     canvas.height = size;
-                    ctx.drawImage(userImg, 0, 0, size, size);
+
+                    // --- شروع منطق برش از مرکز ---
+                    const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+                    const canvasAspectRatio = size / size; // که برابر است با 1
+
+                    let drawWidth = size;
+                    let drawHeight = size;
+                    let x = 0;
+                    let y = 0;
+
+                    if (imgAspectRatio > canvasAspectRatio) {
+                        // تصویر عریض‌تر از کادر است (باید از چپ و راست برش بخورد)
+                        drawHeight = size;
+                        drawWidth = drawHeight * imgAspectRatio;
+                        x = (size - drawWidth) / 2;
+                        y = 0;
+                    } else {
+                        // تصویر بلندتر از کادر است (باید از بالا و پایین برش بخورد)
+                        drawWidth = size;
+                        drawHeight = drawWidth / imgAspectRatio;
+                        x = 0;
+                        y = (size - drawHeight) / 2;
+                    }
+
+                    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+                    // --- پایان منطق برش از مرکز ---
+
+                    // قاب را روی آن می‌کشیم
                     ctx.drawImage(frameImg, 0, 0, size, size);
 
                     const finalImageDataUrl = canvas.toDataURL('image/png');
                     resultImage.src = finalImageDataUrl;
                     downloadLink.href = finalImageDataUrl;
-                    
+
                     frameSelectionDiv.style.display = 'none';
                     statusDiv.style.display = 'none';
                     resultContainer.style.display = 'block';
-                    
+
                     if (isEitaaEnv) {
                         EitaaApp.MainButton.show();
                     }
                 } catch (error) {
                     statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
-                    resetApp(); // در صورت خطا، برنامه را ریست کن
+                    resetApp();
                 }
             }
+
 
             // تابع کامل برای ریست کردن برنامه
             function resetApp() {
