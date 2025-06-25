@@ -206,7 +206,7 @@
                 }
             }
 
-            // --- تابع برای ارسال داده به ربات ایتا ---
+
             function handleSendToEitaa() {
                 const finalImageDataUrl = canvas.toDataURL('image/png');
                 const base64Data = finalImageDataUrl.split(',')[1];
@@ -218,10 +218,10 @@
 
                     try {
                         EitaaApp.sendData(base64Data);
-                        // پس از ارسال موفق، می‌توان وب‌اپ را بست. این کار اختیاری است.
-                        // EitaaApp.close(); 
                     } catch (e) {
-                        console.error("خطا در ارسال داده به ایتا: ", e);
+                        console.error("Eitaa SendData Error:", e);
+                        // نمایش پیام خطای واقعی به جای پیام عمومی
+                        alert("خطا در ارسال داده: " + e.message);
                         statusDiv.innerText = "خطا در ارسال. لطفا مجددا تلاش کنید.";
                         finalActionButton.disabled = false;
                     }
