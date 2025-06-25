@@ -17,84 +17,26 @@
             --button-text-color: var(--tg-theme-button-text-color, #ffffff);
             --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-            transition: color 0.2s, background-color 0.2s;
+            background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px;
+            text-align: center; transition: color 0.2s, background-color 0.2s;
         }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 16px;
-            color: var(--hint-color);
-        }
-        
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { font-size: 16px; color: var(--hint-color); }
         .action-button {
-            display: inline-block;
-            padding: 12px 25px;
-            margin-top: 15px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--button-color);
-            color: var(--button-text-color);
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            text-decoration: none;
-            margin-left: 5px;
-            margin-right: 5px;
+            display: inline-block; padding: 12px 25px; margin-top: 15px; border: none;
+            border-radius: 8px; background-color: var(--button-color); color: var(--button-text-color);
+            font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;
+            text-decoration: none; margin-left: 5px; margin-right: 5px;
         }
-        .action-button:hover {
-            opacity: 0.9;
-        }
-
-        #frame-selection button {
-            margin: 5px;
-        }
-        
-        #image-upload {
-            display: none;
-        }
-        
-        #image-canvas {
-            display: none;
-        }
-
-        #result-container {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: var(--secondary-bg-color);
-            border-radius: 12px;
-        }
-
-        #result-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            border: 2px solid var(--hint-color);
-        }
-
-        #status {
-            margin-top: 15px;
-            font-weight: bold;
-            min-height: 24px;
-        }
-
+        .action-button:hover { opacity: 0.9; }
+        #frame-selection button { margin: 5px; }
+        #image-upload, #image-canvas { display: none; }
+        #result-container { margin-top: 20px; padding: 10px; background-color: var(--secondary-bg-color); border-radius: 12px; }
+        #result-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid var(--hint-color); }
+        #status { margin-top: 15px; font-weight: bold; min-height: 24px; }
     </style>
 </head>
 <body>
@@ -117,21 +59,12 @@
             <canvas id="image-canvas"></canvas>
             <img id="result-image" alt="تصویر نهایی با قاب">
             <div>
-                <button id="show-save-image-button" class="action-button">💾 ذخیره تصویر</button>
+                <!-- متن این دکمه بر اساس محیط تغییر خواهد کرد -->
+                <button id="save-button" class="action-button">💾 ذخیره تصویر</button>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
             </div>
         </div>
     </div>
-
-    <!-- لایه تمام‌صفحه برای نمایش و ذخیره تصویر -->
-    <div id="image-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-        <img id="fullscreen-image" style="max-width: 90%; max-height: 70%; border-radius: 10px; border: 2px solid white;">
-        <p style="color: white; font-size: 16px; margin-top: 20px; padding: 0 15px;">
-            برای ذخیره، انگشت خود را روی تصویر نگه دارید و گزینه «ذخیره تصویر» را انتخاب کنید.
-        </p>
-        <button id="close-overlay-button" class="action-button" style="margin-top: 15px; background-color: #555;">بستن</button>
-    </div>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -143,13 +76,8 @@
             const resultContainer = document.getElementById('result-container');
             const canvas = document.getElementById('image-canvas');
             const resultImage = document.getElementById('result-image');
+            const saveButton = document.getElementById('save-button');
             const restartButton = document.getElementById('restart-button');
-            
-            // عناصر جدید برای نمایش تمام‌صفحه
-            const showSaveImageButton = document.getElementById('show-save-image-button');
-            const imageOverlay = document.getElementById('image-overlay');
-            const fullscreenImage = document.getElementById('fullscreen-image');
-            const closeOverlayButton = document.getElementById('close-overlay-button');
             
             const FRAME_IMAGE_URLS = {
                 frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
@@ -172,10 +100,10 @@
             // --- اتصال رویدادها ---
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
-            showSaveImageButton.addEventListener('click', showImageOverlay);
-            closeOverlayButton.addEventListener('click', hideImageOverlay);
+            saveButton.addEventListener('click', handleSave);
 
             if (isEitaaEnv) {
+                saveButton.innerText = "📲 بازکردن در مرورگر برای ذخیره";
                 EitaaApp.MainButton.setText("شروع مجدد");
                 EitaaApp.MainButton.onClick(resetApp);
                 EitaaApp.MainButton.hide();
@@ -230,21 +158,16 @@
                     let drawWidth = size, drawHeight = size, x = 0, y = 0;
 
                     if (imgAspectRatio > canvasAspectRatio) {
-                        drawHeight = size;
-                        drawWidth = drawHeight * imgAspectRatio;
-                        x = (size - drawWidth) / 2;
+                        drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
                     } else {
-                        drawWidth = size;
-                        drawHeight = drawWidth / imgAspectRatio;
-                        y = (size - drawHeight) / 2;
+                        drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
                     }
 
                     ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
                     ctx.drawImage(frameImg, 0, 0, size, size);
 
                     const finalImageDataUrl = canvas.toDataURL('image/png');
-                    resultImage.src = finalImageDataUrl; // برای نمایش کوچک
-                    fullscreenImage.src = finalImageDataUrl; // برای نمایش تمام‌صفحه
+                    resultImage.src = finalImageDataUrl;
 
                     frameSelectionDiv.style.display = 'none';
                     statusDiv.style.display = 'none';
@@ -259,15 +182,28 @@
                     resetApp();
                 }
             }
-            
-            // --- توابع جدید برای نمایش و پنهان کردن لایه ---
-            function showImageOverlay() {
-                // در وب‌اپ ایتا، برای نمایش صحیح لایه، باید display را از none به flex تغییر دهیم
-                imageOverlay.style.display = 'flex';
-            }
 
-            function hideImageOverlay() {
-                imageOverlay.style.display = 'none';
+            // --- تابع نهایی برای ذخیره تصویر ---
+            function handleSave() {
+                const finalImageDataUrl = canvas.toDataURL('image/png');
+                if (!finalImageDataUrl) return;
+
+                if (isEitaaEnv) {
+                    // در محیط ایتا: از openLink برای باز کردن در مرورگر اصلی استفاده می‌کنیم
+                    try {
+                        EitaaApp.openLink(finalImageDataUrl);
+                    } catch (e) {
+                        alert('خطا در باز کردن لینک: ' + e.message);
+                    }
+                } else {
+                    // در مرورگر وب: از روش دانلود مستقیم استفاده می‌کنیم
+                    const link = document.createElement('a');
+                    link.href = finalImageDataUrl;
+                    link.download = 'parcham-bala-profile.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             }
 
             function resetApp() {
@@ -286,10 +222,8 @@
                 if (isEitaaEnv) {
                     EitaaApp.MainButton.hide();
                 }
-                hideImageOverlay(); // اگر لایه باز بود، آن را هم می‌بندیم
             }
         });
     </script>
-
 </body>
 </html>
