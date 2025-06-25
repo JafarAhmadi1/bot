@@ -117,7 +117,8 @@
             <canvas id="image-canvas"></canvas>
             <img id="result-image" alt="تصویر نهایی با قاب">
             <div>
-                <button id="save-button" class="action-button">ذخیره تصویر</button>
+                <!-- دکمه ذخیره با دکمه ارسال به ایتا جایگزین شد -->
+                <button id="send-to-eitaa-button" class="action-button">✅ دریافت تصویر در ایتا</button>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
             </div>
         </div>
@@ -150,14 +151,14 @@
             const resultContainer = document.getElementById('result-container');
             const canvas = document.getElementById('image-canvas');
             const resultImage = document.getElementById('result-image');
-            const saveButton = document.getElementById('save-button');
+            const sendToEitaaButton = document.getElementById('send-to-eitaa-button'); // دکمه جدید
             const restartButton = document.getElementById('restart-button');
             
             let userImageObjectUrl = null;
 
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
-            saveButton.addEventListener('click', handleSaveImage);
+            sendToEitaaButton.addEventListener('click', handleSendToEitaa); // رویداد جدید
 
             if (isEitaaEnv) {
                 EitaaApp.MainButton.setText("شروع مجدد");
@@ -244,24 +245,45 @@
                 }
             }
 
-            function handleSaveImage() {
-                const finalImageDataUrl = resultImage.src;
-                if (!finalImageDataUrl) return;
+            // --- تابع جدید برای ارسال داده به ربات ایتا ---
+            function handleSendToEitaa() {
+                if (!isEitaaEnv) {
+                    alert("این قابلیت فقط در داخل اپلیکیشن ایتا کار می‌کند.");
+                    return;
+                }
 
-                // این روش در Webview بهتر کار می‌کند
-                const newWindow = window.open();
-                if (newWindow) {
-                    newWindow.document.write(`
-                        <body style="margin:0; background:#333;">
-                            <img src="${finalImageDataUrl}" alt="برای ذخیره، تصویر را لمس کرده و نگه دارید" style="max-width:100%; display:block; margin:auto;"/>
-                            <p style="color:white; text-align:center; font-family:sans-serif;">برای ذخیره، تصویر را لمس کرده و نگه دارید.</p>
-                        </body>
-                    `);
-                } else {
-                    // اگر پاپ‌آپ بلاک شده باشد
-                    alert("لطفاً اجازه باز شدن پنجره‌های جدید را بدهید تا تصویر نمایش داده شود.");
+                // گرفتن داده‌های تصویر از canvas
+                const finalImageDataUrl = canvas.toDataURL('image/png');
+                if (!finalImageDataUrl) {
+                    alert("خطا در تولید تصویر. لطفا مجددا تلاش کنید.");
+                    return;
+                }
+
+                // استخراج بخش Base64 از رشته Data URL
+                const base64Data = finalImageDataUrl.split(',')[1];
+
+                if (base64Data) {
+                    statusDiv.innerText = "درحال ارسال تصویر به ربات...";
+                    statusDiv.style.display = 'block';
+                    sendToEitaaButton.disabled = true; // غیرفعال کردن دکمه برای جلوگیری از کلیک مجدد
+
+                    try {
+                        // ارسال داده به ربات ایتا
+                        EitaaApp.sendData(base64Data);
+                        
+                        // بعد از ارسال موفق، می‌توان وب اپ را بست تا کاربر به چت بازگردد
+                        // این خط اختیاری است اما تجربه کاربری بهتری ایجاد می‌کند.
+                        // EitaaApp.close(); 
+                        
+                    } catch (e) {
+                        console.error("خطا در ارسال داده به ایتا: ", e);
+                        alert("متاسفانه در ارسال تصویر به ربات مشکلی پیش آمد. لطفا دوباره تلاش کنید.");
+                        statusDiv.innerText = '';
+                        sendToEitaaButton.disabled = false;
+                    }
                 }
             }
+
 
             function resetApp() {
                 uploadButton.style.display = 'inline-block';
