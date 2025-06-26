@@ -132,9 +132,7 @@
                     frameSelectionDiv.appendChild(button);
                 });
                 frameSelectionDiv.style.display = 'block';
-            }
-       // این تابع را به طور کامل در کد خود جایگزین کنید
-// این تابع را به طور کامل در کد خود جایگزین کنید (نسخه نهایی و بهینه)
+            }// این تابع را به طور کامل در کد خود جایگزین کنید (نسخه نهایی و قطعی)
 async function createFramedImage(userImageUrl, frameUrl) {
     const ctx = canvas.getContext('2d');
     const loadImage = (src) => new Promise((resolve, reject) => {
@@ -170,12 +168,12 @@ async function createFramedImage(userImageUrl, frameUrl) {
             // -------------------- شروع بخش اصلی: آپلود در Postimages.org --------------------
             
             const formData = new FormData();
-            // ما خود فایل (Blob) را به همراه یک نام فرضی ارسال می‌کنیم
-            formData.append('file', blob, 'profile-framed.png'); 
+            // 1. خود فایل (Blob) را به همراه یک نام فرضی ارسال می‌کنیم
+            formData.append('file', blob, 'parcham-bala.png'); 
             
-            // این پارامترها برای کارکردن API لازم هستند
+            // 2. این پارامترها برای کارکردن API داخلی سایت لازم هستند و نیازی به تغییر ندارند
             formData.append('token', '61aa0b3c67d3237e199859f50e93361a29622a27');
-            formData.append('upload_session', 'parcham_bala_' + Date.now()); 
+            formData.append('upload_session', 'parcham_bala_session_' + Date.now()); 
 
             const apiUrl = 'https://postimg.cc/json'; // اندپوینت API برای آپلود فایل
 
@@ -193,11 +191,13 @@ async function createFramedImage(userImageUrl, frameUrl) {
                     frameSelectionDiv.style.display = 'none';
 
                     if (isEitaaEnv) {
+                        // در ایتا بهتر است لینک صفحه نمایش را باز کنیم که گزینه‌های اشتراک‌گذاری دارد
                         const viewerUrl = imageUrl.replace('i.postimg.cc', 'postimg.cc/image/');
                         EitaaApp.openLink(viewerUrl);
                         statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، روی تصویر نگه دارید یا از منوی گزینه‌ها استفاده کنید.";
                         EitaaApp.MainButton.show();
                     } else {
+                        // برای نمایش در مرورگر عادی، خود تصویر را نشان می‌دهیم
                         resultImage.src = imageUrl;
                         resultContainer.style.display = 'block';
                         statusDiv.innerHTML = '✅ تصویر شما با موفقیت ساخته شد! <a href="' + imageUrl + '" target="_blank" class="action-button">ذخیره تصویر</a>';
