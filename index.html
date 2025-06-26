@@ -142,7 +142,19 @@
                 });
                 frameSelectionDiv.style.display = 'block';
             }
-            
+            // تبدیل Base64 to Blob
+            function dataURLtoBlob(dataurl) {
+              const [header, base64] = dataurl.split(',');
+              const mime = header.match(/:(.*?);/)[1];
+              const bin = atob(base64);
+              let len = bin.length;
+              const u8arr = new Uint8Array(len);
+              while (len--) {
+              u8arr[len] = bin.charCodeAt(len);
+            }
+              return new Blob([u8arr], { type: mime });
+            }
+
             async function createFramedImage(userImageUrl, frameUrl) {
                 const ctx = canvas.getContext('2d');
                 const loadImage = (src) => new Promise((resolve, reject) => {
@@ -169,14 +181,31 @@
 
                     ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
                     ctx.drawImage(frameImg, 0, 0, size, size);
+                    
+                    const finalDataUrl = canvas.toDataURL('image/png');
 
-                    finalImageDataUrl = canvas.toDataURL('image/png');
-                    resultImage.src = finalImageDataUrl;
+                    // ۱. Blob URL بسازید
+                    const blob = dataURLtoBlob(finalDataUrl);
+                    const blobUrl = URL.createObjectURL(blob);
 
-                    frameSelectionDiv.style.display = 'none';
-                    statusDiv.innerText = '';
-                    resultContainer.style.display = 'block';
-                    if (isEitaaEnv) EitaaApp.MainButton.show();
+                    // ۲. لینک دانلود رو آپدیت کنید
+                    downloadLink.href = blobUrl;
+                    downloadLink.download = 'parcham-bala-profile.png';
+                    downloadLink.target = '_blank';     // باز شدن در تب جدید مرورگر (برای long-press)
+
+                    if (isEitaaEnv) {
+                      // finalDataUrl همون canvas.toDataURL(...) هست
+                      EitaaApp.openLink(finalDataUrl);
+                    }
+                    
+                    // finalImageDataUrl = canvas.toDataURL('image/png');
+                    // resultImage.src = finalImageDataUrl;
+
+                    // frameSelectionDiv.style.display = 'none';
+                    // statusDiv.innerText = '';
+                    // resultContainer.style.display = 'block';
+                    // if (isEitaaEnv) EitaaApp.MainButton.show();
+                    
                 } catch (error) {
                     statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفا دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
