@@ -32,17 +32,12 @@
         }
         .action-button:hover { opacity: 0.9; }
         .action-button:disabled { background-color: #cccccc; cursor: not-allowed; opacity: 0.7; }
-        #frame-selection button { margin: 5px; }
         #image-upload { display: none; }
-        #result-container {
-            margin-top: 20px; padding: 10px; background-color: var(--secondary-bg-color);
-            border-radius: 12px;
-        }
-        #result-image {
-            max-width: 100%; height: auto; border-radius: 8px;
-            border: 2px solid var(--hint-color); cursor: pointer;
-        }
-        #status { margin-top: 15px; font-weight: bold; min-height: 24px; }
+        #status { margin-top: 15px; font-weight: bold; min-height: 48px; /* فضای بیشتر برای پیام دو خطی */ }
+
+        /* این بخش برای نمایش نتیجه در مرورگرهای عادی استفاده می‌شود */
+        #result-container { margin-top: 20px; }
+        #result-image { max-width: 100%; height: auto; border-radius: 8px; border: 2px solid var(--hint-color); }
     </style>
 </head>
 <body>
@@ -60,16 +55,15 @@
 
         <div id="status"></div>
 
-        <!-- بخش نتیجه که اصلاح شده است -->
+        <!-- این کانتینر فقط خارج از ایتا برای نمایش نتیجه استفاده می‌شود -->
         <div id="result-container" style="display: none;">
-            <h3>تصویر شما آماده شد!</h3>
             <img id="result-image" alt="تصویر نهایی با قاب">
-            <p id="download-instructions" style="font-weight: bold; margin-top: 15px; color: var(--text-color);"></p>
             <div>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
             </div>
-            <canvas id="image-canvas" style="display: none;"></canvas>
         </div>
+        
+        <canvas id="image-canvas" style="display: none;"></canvas>
     </div>
 
     <script>
@@ -99,10 +93,9 @@
             const frameSelectionDiv = document.getElementById('frame-selection');
             const statusDiv = document.getElementById('status');
             const resultContainer = document.getElementById('result-container');
-            const canvas = document.getElementById('image-canvas');
             const resultImage = document.getElementById('result-image');
-            const downloadInstructions = document.getElementById('download-instructions');
             const restartButton = document.getElementById('restart-button');
+            const canvas = document.getElementById('image-canvas');
             
             let userImageObjectUrl = null;
 
@@ -147,7 +140,7 @@
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.onload = () => resolve(img);
-                    img.onerror = (e) => reject(new Error(`خطا در بارگذاری تصویر: ${src}. علت: مشکل CORS یا شبکه.`));
+                    img.onerror = (e) => reject(new Error(`خطا در بارگذاری قاب. لطفا از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.`));
                     img.src = src;
                 });
 
@@ -176,20 +169,30 @@
 
                     const finalImageDataUrl = canvas.toDataURL('image/png');
                     
-                    // -- نمایش نتیجه و راهنمای دانلود --
-                    resultImage.src = finalImageDataUrl;
-                    downloadInstructions.innerText = '✅ برای ذخیره، روی تصویر انگشت خود را نگه دارید و گزینه‌ی "ذخیره تصویر" را انتخاب کنید.';
-
-                    frameSelectionDiv.style.display = 'none';
-                    statusDiv.innerText = '';
-                    resultContainer.style.display = 'block';
+                    // --- شروع تغییر اصلی ---
+                    frameSelectionDiv.style.display = 'none'; // مخفی کردن دکمه‌های انتخاب قاب
 
                     if (isEitaaEnv) {
+                        // در محیط ایتا، تصویر را در یک لینک باز می‌کنیم
+                        EitaaApp.openLink(finalImageDataUrl);
+                        
+                        // به کاربر راهنمایی می‌کنیم که چطور ذخیره کند
+                        statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (معمولاً سه نقطه بالا) استفاده کنید.";
+                        
+                        // دکمه "شروع مجدد" اصلی ایتا را نمایش می‌دهیم
                         EitaaApp.MainButton.show();
+
+                    } else {
+                        // در مرورگر عادی، نتیجه را در صفحه نمایش می‌دهیم
+                        statusDiv.innerText = "✅ تصویر شما آماده شد!";
+                        resultImage.src = finalImageDataUrl;
+                        resultContainer.style.display = 'block';
                     }
+                    // --- پایان تغییر اصلی ---
+
                 } catch (error) {
                     statusDiv.innerText = error.message;
-                    console.error("Image loading error:", error);
+                    console.error("Image processing error:", error);
                     frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
                 }
             }
