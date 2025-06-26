@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>پویش پرچم بالا (Imgix)</title>
+  <title>پویش پرچم بالا (Imgix نسخه ربات)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -11,7 +11,7 @@
       background-color: #f5f5f5;
     }
     h2 { color: #1a73e8; }
-    input, select {
+    select {
       padding: 10px 14px;
       font-size: 16px;
       margin: 12px 0;
@@ -39,22 +39,13 @@
       width: 90%;
       max-width: 600px;
     }
-    #preview-img {
-      margin-top: 10px;
-      max-width: 200px;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      display: none;
-    }
   </style>
 </head>
 <body>
 
   <h2>🇮🇷 پویش پرچم بالا</h2>
-  <p>ابتدا تصویر خود را انتخاب کنید و سپس قاب دلخواه را برگزینید:</p>
-
-  <input type="file" id="image-upload" accept="image/*"><br>
-  <img id="preview-img"><br>
+  <p>تصویر شما با موفقیت دریافت شد.</p>
+  <p>لطفاً قاب دلخواه خود را انتخاب کنید:</p>
 
   <select id="frame-select">
     <option value="frame1">🖼 قاب شماره ۱</option>
@@ -75,32 +66,19 @@
 
     const IMGIX_DOMAIN = "bale-bot.imgix.net";
 
-    let uploadedFileName = "";
-
-    // بارگذاری تصویر و ساخت نام جعلی برای استفاده
-    document.getElementById('image-upload').addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const preview = document.getElementById('preview-img');
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = 'inline-block';
-
-      const timestamp = Date.now();
-      const ext = file.name.split('.').pop().toLowerCase();
-      uploadedFileName = `uploads/image_${timestamp}.${ext}`;
-    });
-
     function base64url(str) {
       return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
-    function generateFinalUrl() {
-      if (!uploadedFileName) {
-        alert("لطفاً ابتدا تصویری را انتخاب نمایید.");
-        return;
-      }
+    // مسیر فایل دریافتی از پارامتر URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const uploadedFileName = urlParams.get("file");
 
+    if (!uploadedFileName) {
+      document.body.innerHTML = "<h2>❌ خطا</h2><p>مسیر فایل یافت نشد. لطفاً از طریق ربات وارد شوید.</p>";
+    }
+
+    function generateFinalUrl() {
       const frameKey = document.getElementById("frame-select").value;
       const frameUrl = FRAME_IMAGE_URLS[frameKey];
 
@@ -127,7 +105,7 @@
         <p>✅ لینک تصویر نهایی:</p>
         <input type="text" value="${finalUrl}" readonly onclick="this.select()">
         <br><br>
-        <a href="${finalUrl}" target="_blank" class="btn">مشاهده تصویر نهایی</a>
+        <a href="${finalUrl}" target="_blank" class="btn">👁 مشاهده تصویر نهایی</a>
       `;
     }
   </script>
