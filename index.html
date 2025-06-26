@@ -134,68 +134,93 @@
                 frameSelectionDiv.style.display = 'block';
             }
             
-            async function createFramedImage(userImageUrl, frameUrl) {
-                const ctx = canvas.getContext('2d');
-                const loadImage = (src) => new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = "Anonymous";
-                    img.onload = () => resolve(img);
-                    img.onerror = (e) => reject(new Error(`خطا در بارگذاری قاب. لطفا از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.`));
-                    img.src = src;
+            // این تابع را به طور کامل در کد خود جایگزین کنید
+async function createFramedImage(userImageUrl, frameUrl) {
+    const ctx = canvas.getContext('2d');
+    const loadImage = (src) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(new Error(`خطا در بارگذاری قاب. لطفا از اتصال اینترنت خود مطمئن شوید.`));
+        img.src = src;
+    });
+
+    try {
+        // بخش ساخت تصویر روی canvas (بدون تغییر)
+        const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
+        const size = 512;
+        canvas.width = size;
+        canvas.height = size;
+        const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+        let drawWidth, drawHeight, x, y;
+        if (imgAspectRatio > 1) {
+            drawHeight = size; drawWidth = drawHeight * imgAspectRatio;
+            x = (size - drawWidth) / 2; y = 0;
+        } else {
+            drawWidth = size; drawHeight = drawWidth / imgAspectRatio;
+            x = 0; y = (size - drawHeight) / 2;
+        }
+        ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+        ctx.drawImage(frameImg, 0, 0, size, size);
+
+        statusDiv.innerText = "⏳ در حال آپلود تصویر نهایی... این ممکن است چند ثانیه طول بکشد.";
+        
+        // تبدیل canvas به Blob و ارسال به Freeimage.host
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            // نام فیلد بر اساس مستندات API باید 'source' باشد
+            formData.append('source', blob); 
+            // نوع درخواست باید 'file' باشد
+            formData.append('type', 'file'); 
+            // فرمت پاسخ را json می‌خواهیم
+            formData.append('format', 'json');
+
+            // -------------------- شروع بخش اصلی: آپلود در Freeimage.host --------------------
+            const apiKey = '6d207e02198a847aa98d0a2a901485a5'; // !!! کلید API که از سایت گرفتید را اینجا قرار دهید !!!
+            const apiUrl = `https://freeimage.host/api/1/upload?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: formData,
                 });
 
-                try {
-                    const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
-                    const size = 512;
-                    canvas.width = size;
-                    canvas.height = size;
+                const result = await response.json();
 
-                    const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-                    let drawWidth, drawHeight, x, y;
-                    if (imgAspectRatio > 1) {
-                        drawHeight = size;
-                        drawWidth = drawHeight * imgAspectRatio;
-                        x = (size - drawWidth) / 2;
-                        y = 0;
-                    } else {
-                        drawWidth = size;
-                        drawHeight = drawWidth / imgAspectRatio;
-                        x = 0;
-                        y = (size - drawHeight) / 2;
-                    }
-
-                    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
-                    ctx.drawImage(frameImg, 0, 0, size, size);
-
-                    const finalImageDataUrl = canvas.toDataURL('image/png');
+                // بر اساس مستندات، وضعیت موفقیت‌آمیز کد 200 دارد
+                if (result.status_code === 200) {
+                    const imageUrl = result.image.url; // این لینک معتبری است که ما نیاز داریم!
                     
-                    // --- شروع تغییر اصلی ---
-                    frameSelectionDiv.style.display = 'none'; // مخفی کردن دکمه‌های انتخاب قاب
+                    frameSelectionDiv.style.display = 'none';
 
                     if (isEitaaEnv) {
-                        // در محیط ایتا، تصویر را در یک لینک باز می‌کنیم
-                        EitaaApp.openLink(finalImageDataUrl);
-                        
-                        // به کاربر راهنمایی می‌کنیم که چطور ذخیره کند
-                        statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (معمولاً سه نقطه بالا) استفاده کنید.";
-                        
-                        // دکمه "شروع مجدد" اصلی ایتا را نمایش می‌دهیم
+                        EitaaApp.openLink(imageUrl);
+                        statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (سه نقطه) استفاده کنید.";
                         EitaaApp.MainButton.show();
-
                     } else {
-                        // در مرورگر عادی، نتیجه را در صفحه نمایش می‌دهیم
-                        statusDiv.innerText = "✅ تصویر شما آماده شد!";
-                        resultImage.src = finalImageDataUrl;
-                        resultContainer.style.display = 'block';
+                        window.open(imageUrl, '_blank');
+                        statusDiv.innerText = "✅ تصویر شما در تب جدید باز شد!";
                     }
-                    // --- پایان تغییر اصلی ---
-
-                } catch (error) {
-                    statusDiv.innerText = error.message;
-                    console.error("Image processing error:", error);
+                } else {
+                    console.error("Freeimage.host API Error:", result);
+                    statusDiv.innerText = `خطا در آپلود: ${result.status_txt}`;
                     frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
                 }
+            } catch (uploadError) {
+                console.error("Upload fetch error:", uploadError);
+                statusDiv.innerText = "خطا در ارتباط با سرور آپلود. از اتصال اینترنت مطمئن شوید.";
+                frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
             }
+            // -------------------- پایان بخش اصلی --------------------
+
+        }, 'image/png');
+
+    } catch (error) {
+        statusDiv.innerText = error.message;
+        console.error("Image processing error:", error);
+        frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
+    }
+}
 
             function resetApp() {
                 uploadButton.style.display = 'inline-block';
