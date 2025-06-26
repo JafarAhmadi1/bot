@@ -135,6 +135,7 @@
                 frameSelectionDiv.style.display = 'block';
             }
        // این تابع را به طور کامل در کد خود جایگزین کنید
+// این تابع را به طور کامل در کد خود جایگزین کنید (نسخه نهایی و بهینه)
 async function createFramedImage(userImageUrl, frameUrl) {
     const ctx = canvas.getContext('2d');
     const loadImage = (src) => new Promise((resolve, reject) => {
@@ -164,55 +165,56 @@ async function createFramedImage(userImageUrl, frameUrl) {
         ctx.drawImage(frameImg, 0, 0, size, size);
 
         statusDiv.innerText = "⏳ در حال آپلود تصویر نهایی... این ممکن است چند ثانیه طول بکشد.";
-        
-        // -------------------- شروع بخش اصلی: آپلود در ImgBB --------------------
 
-        const apiKey = "37d5e60ceda885439b1bdcbab0ee0e00"; // کلید API شما
+        // تبدیل canvas به Blob (شبیه به یک فایل واقعی) که روش بهینه‌تری است
+        canvas.toBlob(async (blob) => {
+            // -------------------- شروع بخش اصلی: آپلود در Postimages.org --------------------
+            
+            const formData = new FormData();
+            // ما خود فایل (Blob) را به همراه یک نام فرضی ارسال می‌کنیم
+            formData.append('file', blob, 'profile-framed.png'); 
+            
+            // این پارامترها برای کارکردن API لازم هستند
+            formData.append('token', '61aa0b3c67d3237e199859f50e93361a29622a27');
+            formData.append('upload_session', 'parcham_bala_' + Date.now()); 
 
-        // <<<<< این بلوک IF از اینجا حذف شد، چون دیگر لازم نبود >>>>>
+            const apiUrl = 'https://postimg.cc/json'; // اندپوینت API برای آپلود فایل
 
-        // 2. تبدیل canvas به فرمت Base64 برای ارسال
-        const base64Image = canvas.toDataURL('image/png').split(',')[1];
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: formData,
+                });
 
-        // 3. ساختن FormData برای ارسال به API
-        const formData = new FormData();
-        formData.append('image', base64Image); 
+                const result = await response.json();
 
-        const apiUrl = `https://api.imgbb.com/1/upload?key=${apiKey}`;
+                if (result.status === 'OK') {
+                    const imageUrl = result.url; // این لینک مستقیم تصویر است
+                    
+                    frameSelectionDiv.style.display = 'none';
 
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                body: formData,
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                const imageUrl = result.data.url; 
-                
-                frameSelectionDiv.style.display = 'none';
-
-                if (isEitaaEnv) {
-                    EitaaApp.openLink(imageUrl);
-                    statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (سه نقطه) استفاده کنید.";
-                    EitaaApp.MainButton.show();
+                    if (isEitaaEnv) {
+                        const viewerUrl = imageUrl.replace('i.postimg.cc', 'postimg.cc/image/');
+                        EitaaApp.openLink(viewerUrl);
+                        statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، روی تصویر نگه دارید یا از منوی گزینه‌ها استفاده کنید.";
+                        EitaaApp.MainButton.show();
+                    } else {
+                        resultImage.src = imageUrl;
+                        resultContainer.style.display = 'block';
+                        statusDiv.innerHTML = '✅ تصویر شما با موفقیت ساخته شد! <a href="' + imageUrl + '" target="_blank" class="action-button">ذخیره تصویر</a>';
+                    }
                 } else {
-                    resultImage.src = imageUrl;
-                    resultContainer.style.display = 'block';
-                    statusDiv.innerHTML = '✅ تصویر شما با موفقیت ساخته شد! <a href="' + imageUrl + '" target="_blank" class="action-button">ذخیره تصویر</a>';
+                    console.error("Postimages API Error:", result);
+                    statusDiv.innerText = `خطا در آپلود: ${result.msg || 'مشکلی پیش آمد'}`;
+                    frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
                 }
-            } else {
-                console.error("ImgBB API Error:", result);
-                statusDiv.innerText = `خطا در آپلود: ${result.error.message}`;
+            } catch (uploadError) {
+                console.error("Upload fetch error:", uploadError);
+                statusDiv.innerText = "خطا در ارتباط با سرور آپلود. از اتصال اینترنت مطمئن شوید.";
                 frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
             }
-        } catch (uploadError) {
-            console.error("Upload fetch error:", uploadError);
-            statusDiv.innerText = "خطا در ارتباط با سرور آپلود. از اتصال اینترنت مطمئن شوید.";
-            frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
-        }
-        // -------------------- پایان بخش اصلی --------------------
+            // -------------------- پایان بخش اصلی --------------------
+        }, 'image/png');
 
     } catch (error) {
         statusDiv.innerText = error.message;
