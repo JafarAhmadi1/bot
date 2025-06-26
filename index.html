@@ -2,30 +2,59 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>پویش پرچم بالا - Imgix</title>
+  <title>پویش پرچم بالا</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 30px; background-color: #fdfdfd; }
-    .btn { background-color: #28a745; color: white; border: none; padding: 12px 24px;
-           border-radius: 8px; font-size: 16px; cursor: pointer; margin: 10px; }
-    #output { margin-top: 25px; }
-    input, select { padding: 8px 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-top: 12px; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 30px;
+      background-color: #f5f5f5;
+    }
+    h2 { color: #1a73e8; }
+    input, select {
+      padding: 10px 14px;
+      font-size: 16px;
+      margin: 12px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 400px;
+    }
+    .btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 15px 0;
+    }
+    #output {
+      margin-top: 25px;
+    }
+    #output input {
+      direction: ltr;
+      font-family: monospace;
+      width: 90%;
+      max-width: 600px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>🇮🇷 پویش پرچم بالا</h2>
-  <p>لطفاً نام فایل تصویر بارگذاری‌شده در بله را وارد کنید:</p>
+  <h2>🇮🇷 پویش پرچم بالا (نسخه Imgix)</h2>
+  <p>لطفاً مسیر فایل آپلود‌شده در سرور بله را وارد کرده و یک قاب انتخاب کنید:</p>
 
   <input type="text" id="filename-input" placeholder="مثلاً uploads/photo123.jpg"><br>
 
-  <p>یک قاب انتخاب کنید:</p>
   <select id="frame-select">
     <option value="frame1">🖼 قاب شماره ۱</option>
     <option value="frame2">🖼 قاب شماره ۲</option>
     <option value="frame3">🖼 قاب شماره ۳</option>
   </select><br>
 
-  <button class="btn" onclick="generateFinalUrl()">🔗 ساخت لینک نهایی</button>
+  <button class="btn" onclick="generateFinalUrl()">🔗 ساخت لینک تصویر نهایی</button>
 
   <div id="output"></div>
 
@@ -36,8 +65,7 @@
       frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
     };
 
-    const IMGIX_DOMAIN = "YOUR_IMGIX_DOMAIN"; // مثلاً: mybot.imgix.net
-    const BOT_TOKEN = "YOUR_BOT_TOKEN"; // فقط برای مسیر فایل‌ها استفاده می‌شود
+    const IMGIX_DOMAIN = "bale-bot.imgix.net"; // دامنه‌ی اختصاصی Imgix شما
 
     function base64url(str) {
       return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -46,32 +74,35 @@
     function generateFinalUrl() {
       const filePath = document.getElementById("filename-input").value.trim();
       const frameKey = document.getElementById("frame-select").value;
+      const frameUrl = FRAME_IMAGE_URLS[frameKey];
 
       if (!filePath) {
-        alert("لطفاً نام فایل را وارد کنید.");
+        alert("⚠️ لطفاً مسیر فایل را وارد کنید.");
         return;
       }
 
-      const frameUrl = FRAME_IMAGE_URLS[frameKey];
-      const encodedUserImagePath = encodeURIComponent(`file/bot${BOT_TOKEN}/${filePath}`);
+      const encodedFilePath = encodeURIComponent(filePath);
       const encodedFrameUrl = base64url(frameUrl);
 
       const baseParams = new URLSearchParams({
-        w: "512", h: "512", fit: "crop", crop: "faces,entropy"
+        w: '512',
+        h: '512',
+        fit: 'crop',
+        crop: 'faces,entropy'
       });
 
       const overlayParams = new URLSearchParams({
-        "mark64": encodedFrameUrl,
-        "mark-w": "512",
-        "mark-h": "512",
-        "mark-fit": "crop"
+        mark64: encodedFrameUrl,
+        'mark-w': '512',
+        'mark-h': '512',
+        'mark-fit': 'crop'
       });
 
-      const finalUrl = `https://${IMGIX_DOMAIN}/${encodedUserImagePath}?${baseParams.toString()}&${overlayParams.toString()}`;
-      
+      const finalUrl = `https://${IMGIX_DOMAIN}/${encodedFilePath}?${baseParams.toString()}&${overlayParams.toString()}`;
+
       document.getElementById("output").innerHTML = `
         <p>✅ لینک تصویر نهایی:</p>
-        <input type="text" value="${finalUrl}" style="width:90%; padding:8px;" readonly onclick="this.select()">
+        <input type="text" value="${finalUrl}" readonly onclick="this.select()">
         <br><br>
         <a href="${finalUrl}" target="_blank" class="btn">مشاهده تصویر</a>
       `;
