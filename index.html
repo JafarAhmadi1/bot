@@ -55,7 +55,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
-            text-decoration: none; /* برای تگ <a> */
+            text-decoration: none;
             margin-left: 5px;
             margin-right: 5px;
         }
@@ -92,7 +92,7 @@
         #status {
             margin-top: 15px;
             font-weight: bold;
-            min-height: 24px; /* برای جلوگیری از پرش صفحه */
+            min-height: 24px;
         }
 
     </style>
@@ -103,26 +103,22 @@
         <h1>🇮🇷 پویش پرچم بالا</h1>
         <p> سلام به پویش پرچم بالا خوش آومدید.برای حمایت از *ایران جان* و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
         
-        <!-- مرحله ۱: دکمه برای انتخاب عکس -->
         <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
         <input type="file" id="image-upload" accept="image/*">
 
-        <!-- مرحله ۲: انتخاب قاب (در ابتدا مخفی است) -->
         <div id="frame-selection" style="display: none;">
             <p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>
         </div>
 
-        <!-- نمایش وضعیت پردازش -->
         <div id="status"></div>
 
-        <!-- مرحله ۳: نمایش نتیجه (در ابتدا مخفی است) -->
         <div id="result-container" style="display: none;">
             <h3>تصویر شما آماده شد!</h3>
             <canvas id="image-canvas"></canvas>
             <img id="result-image" alt="تصویر نهایی با قاب">
             <div>
-                <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
-                <!-- دکمه جدید برای شروع مجدد -->
+                <!-- دکمه دانلود اصلاح شده است -->
+                <button id="download-button" class="action-button">دانلود تصویر</button>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
             </div>
         </div>
@@ -155,20 +151,21 @@
             const resultContainer = document.getElementById('result-container');
             const canvas = document.getElementById('image-canvas');
             const resultImage = document.getElementById('result-image');
-            const downloadLink = document.getElementById('download-link');
-            const restartButton = document.getElementById('restart-button'); // دکمه جدید
+            const downloadButton = document.getElementById('download-button'); // دکمه جدید دانلود
+            const restartButton = document.getElementById('restart-button'); 
             
             let userImageObjectUrl = null;
+            let finalImageDataUrl = null; // متغیر برای نگهداری دیتای تصویر نهایی
 
             // اتصال رویدادها
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
-            
-            // اگر در محیط ایتا هستیم، دکمه اصلی را هم تنظیم کن
+            downloadButton.addEventListener('click', handleDownload); // رویداد جدید
+
             if (isEitaaEnv) {
                 EitaaApp.MainButton.setText("شروع مجدد");
                 EitaaApp.MainButton.onClick(resetApp);
-                EitaaApp.MainButton.hide(); // در ابتدا مخفی باشد
+                EitaaApp.MainButton.hide();
             }
 
             function handleImageUpload(event) {
@@ -185,7 +182,6 @@
             }
 
             function showFrameSelection() {
-                // پاک کردن قاب‌های قبلی
                 frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
                 Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
                     const button = document.createElement('button');
@@ -217,24 +213,16 @@
                     const size = 512;
                     canvas.width = size;
                     canvas.height = size;
-
-                    // --- شروع منطق برش از مرکز ---
+                    
                     const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-                    const canvasAspectRatio = size / size; // که برابر است با 1
+                    let drawWidth, drawHeight, x, y;
 
-                    let drawWidth = size;
-                    let drawHeight = size;
-                    let x = 0;
-                    let y = 0;
-
-                    if (imgAspectRatio > canvasAspectRatio) {
-                        // تصویر عریض‌تر از کادر است (باید از چپ و راست برش بخورد)
+                    if (imgAspectRatio > 1) {
                         drawHeight = size;
                         drawWidth = drawHeight * imgAspectRatio;
                         x = (size - drawWidth) / 2;
                         y = 0;
                     } else {
-                        // تصویر بلندتر از کادر است (باید از بالا و پایین برش بخورد)
                         drawWidth = size;
                         drawHeight = drawWidth / imgAspectRatio;
                         x = 0;
@@ -242,14 +230,10 @@
                     }
 
                     ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
-                    // --- پایان منطق برش از مرکز ---
-
-                    // قاب را روی آن می‌کشیم
                     ctx.drawImage(frameImg, 0, 0, size, size);
 
-                    const finalImageDataUrl = canvas.toDataURL('image/png');
+                    finalImageDataUrl = canvas.toDataURL('image/png'); // ذخیره در متغیر
                     resultImage.src = finalImageDataUrl;
-                    downloadLink.href = finalImageDataUrl;
 
                     frameSelectionDiv.style.display = 'none';
                     statusDiv.style.display = 'none';
@@ -265,24 +249,42 @@
                 }
             }
 
+            // --- تابع جدید برای مدیریت دانلود ---
+            function handleDownload() {
+                if (!finalImageDataUrl) {
+                    if(isEitaaEnv) EitaaApp.showAlert('ابتدا باید یک تصویر بسازید.');
+                    else alert('ابتدا باید یک تصویر بسازید.');
+                    return;
+                }
 
-            // تابع کامل برای ریست کردن برنامه
+                if (isEitaaEnv) {
+                    // راه حل برای محیط ایتا
+                    EitaaApp.openLink(finalImageDataUrl);
+                } else {
+                    // راه حل برای مرورگر عادی
+                    const link = document.createElement('a');
+                    link.href = finalImageDataUrl;
+                    link.download = 'parcham-bala-profile.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+
             function resetApp() {
-                // نمایش و مخفی کردن عناصر
                 uploadButton.style.display = 'inline-block';
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'none';
                 statusDiv.style.display = 'block';
                 statusDiv.innerText = '';
                 
-                // پاک کردن داده‌های قبلی
                 uploadInput.value = '';
                 if (userImageObjectUrl) {
                     URL.revokeObjectURL(userImageObjectUrl);
                     userImageObjectUrl = null;
                 }
+                finalImageDataUrl = null;
                 
-                // مخفی کردن دکمه اصلی ایتا
                 if (isEitaaEnv) {
                     EitaaApp.MainButton.hide();
                 }
