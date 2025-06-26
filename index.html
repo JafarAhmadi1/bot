@@ -1,207 +1,74 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>پویش پرچم بالا (ترکیب در مرورگر)</title>
+  <meta charset="UTF-8" />
+  <title>ترکیب تصویر با قاب (Imgix)</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 30px;
-      background-color: #f5f5f5;
-    }
-    h2 { color: #1a73e8; }
-    input[type="file"], select {
-      padding: 10px 14px;
-      font-size: 16px;
-      margin: 12px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 80%;
-      max-width: 400px;
-    }
-    .btn {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 15px 5px;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
-    #output {
-      margin-top: 25px;
-    }
-    #preview-img, #final-image-preview {
-      margin-top: 10px;
-      max-width: 250px;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      display: none;
-    }
-    .loader {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      display: none; /* مخفی به صورت پیش‌فرض */
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    body { font-family: sans-serif; text-align: center; margin-top: 40px; background: #f9f9f9; }
+    input, select { padding: 10px; font-size: 16px; margin: 10px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 12px 24px; font-size: 16px; border-radius: 8px; border: none; background-color: #28a745; color: #fff; cursor: pointer; }
+    #preview-img { margin-top: 15px; max-width: 250px; border-radius: 8px; display: none; border: 2px solid #ccc; }
+    #output { margin-top: 20px; }
+    #output input { width: 90%; font-family: monospace; direction: ltr; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <h2>🇮🇷 پویش پرچم بالا</h2>
-  <p>ابتدا تصویر پروفایل خود را انتخاب کرده و سپس قاب دلخواه را برگزینید:</p>
+  <h2>🇮🇷 ترکیب تصویر با قاب</h2>
 
   <input type="file" id="image-upload" accept="image/*"><br>
-  <img id="preview-img" alt="پیش‌نمایش تصویر شما"><br>
+  <img id="preview-img" alt="پیش‌نمایش تصویر"><br>
 
+  <label>قاب دلخواه:</label>
   <select id="frame-select">
-    <option value="frame1">🖼 قاب شماره ۱</option>
-    <option value="frame2">🖼 قاب شماره ۲</option>
-    <option value="frame3">🖼 قاب شماره ۳</option>
+    <option value="https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png">🖼 قاب ۱</option>
+    <option value="https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png">🖼 قاب ۲</option>
+    <option value="https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png">🖼 قاب ۳</option>
   </select><br>
 
-  <button class="btn" id="generate-btn" onclick="generateFinalImage()" disabled>ساخت تصویر نهایی</button>
+  <button onclick="generateLink()">🔗 ساخت لینک نهایی</button>
 
-  <div id="output">
-      <div class="loader" id="loader"></div>
-      <img id="final-image-preview" alt="تصویر نهایی شما">
-      <div id="download-container"></div>
-  </div>
+  <div id="output"></div>
 
   <script>
-    const FRAME_IMAGE_URLS = {
-      // برای جلوگیری از مشکلات Cross-Origin، بهتر است تصاویر از یک دامنه معتبر لود شوند
-      frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
-      frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
-      frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
-    };
+    const domain = "bale-bot.imgix.net";
+    let uploadedFileName = "";
 
-    let userImageFile = null;
-    const uploadInput = document.getElementById('image-upload');
-    const generateBtn = document.getElementById('generate-btn');
-
-    // فعال کردن دکمه ساخت تصویر پس از انتخاب فایل
-    uploadInput.addEventListener('change', function(event) {
+    // دریافت تصویر از سیستم و نمایش آن
+    document.getElementById("image-upload").addEventListener("change", function(event) {
       const file = event.target.files[0];
-      if (!file) {
-        userImageFile = null;
-        generateBtn.disabled = true;
-        return;
-      }
-      userImageFile = file;
+      if (!file) return;
 
-      const preview = document.getElementById('preview-img');
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = 'inline-block';
-      generateBtn.disabled = false; // فعال کردن دکمه
+      const ext = file.name.split('.').pop().toLowerCase();
+      const timestamp = Date.now();
+      uploadedFileName = `uploads/image_${timestamp}.${ext}`; // فرض مسیر آپلود روی سرور
+
+      const imgPreview = document.getElementById("preview-img");
+      imgPreview.src = URL.createObjectURL(file);
+      imgPreview.style.display = "block";
     });
 
-    // تابع اصلی برای ترکیب تصاویر
-    async function generateFinalImage() {
-      if (!userImageFile) {
-        alert("لطفاً ابتدا تصویری را انتخاب نمایید.");
+    function base64url(str) {
+      return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function generateLink() {
+      if (!uploadedFileName) {
+        alert("لطفاً ابتدا تصویری انتخاب کنید.");
         return;
       }
-      
-      const loader = document.getElementById('loader');
-      const outputDiv = document.getElementById('output');
-      const finalImagePreview = document.getElementById('final-image-preview');
-      const downloadContainer = document.getElementById('download-container');
 
-      // نمایش لودر و پاک کردن خروجی قبلی
-      loader.style.display = 'block';
-      generateBtn.disabled = true;
-      finalImagePreview.style.display = 'none';
-      downloadContainer.innerHTML = '';
+      const frameUrl = document.getElementById("frame-select").value;
+      const encodedFrame = base64url(frameUrl);
 
+      const imgixURL = `https://${domain}/${encodeURIComponent(uploadedFileName)}?w=512&h=512&fit=crop&crop=faces,entropy&mark64=${encodedFrame}&mark-w=512&mark-h=512&mark-fit=crop`;
 
-      // ۱. لود کردن تصویر کاربر و تصویر قاب
-      const frameKey = document.getElementById("frame-select").value;
-      const frameUrl = FRAME_IMAGE_URLS[frameKey];
-
-      try {
-        const [userImage, frameImage] = await Promise.all([
-          loadImage(URL.createObjectURL(userImageFile)),
-          loadImage(frameUrl)
-        ]);
-        
-        // ۲. ساخت یک بوم (Canvas) برای ترکیب
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const size = 512; // اندازه تصویر نهایی (مربع)
-        canvas.width = size;
-        canvas.height = size;
-        
-        // ۳. رسم تصویر کاربر در مرکز بوم
-        // این کد تصویر را طوری رسم می‌کند که کل بوم را بپوشاند و قسمت‌های اضافی برش بخورد (مثل fit=crop)
-        const userAspectRatio = userImage.width / userImage.height;
-        let sx, sy, sWidth, sHeight;
-        if (userAspectRatio > 1) { // تصویر عریض‌تر است
-            sHeight = userImage.height;
-            sWidth = sHeight;
-            sx = (userImage.width - sWidth) / 2;
-            sy = 0;
-        } else { // تصویر بلندتر است
-            sWidth = userImage.width;
-            sHeight = sWidth;
-            sy = (userImage.height - sHeight) / 2;
-            sx = 0;
-        }
-        ctx.drawImage(userImage, sx, sy, sWidth, sHeight, 0, 0, size, size);
-
-        // ۴. رسم قاب روی تصویر کاربر
-        ctx.drawImage(frameImage, 0, 0, size, size);
-        
-        // ۵. تبدیل بوم به یک تصویر قابل دانلود
-        const finalImageDataUrl = canvas.toDataURL('image/png');
-        
-        // ۶. نمایش نتیجه به کاربر
-        finalImagePreview.src = finalImageDataUrl;
-        finalImagePreview.style.display = 'block';
-        
-        downloadContainer.innerHTML = `
-          <p>✅ تصویر شما آماده است!</p>
-          <a href="${finalImageDataUrl}" download="parcham-bala.png" class="btn">📥 دانلود تصویر</a>
-        `;
-
-      } catch (error) {
-        console.error("خطا در بارگذاری یا پردازش تصویر:", error);
-        alert("متاسفانه در ساخت تصویر مشکلی پیش آمد. لطفا از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.");
-      } finally {
-        // مخفی کردن لودر و فعال کردن دکمه در هر صورت
-        loader.style.display = 'none';
-        generateBtn.disabled = false;
-      }
+      document.getElementById("output").innerHTML = `
+        <p>✅ لینک تصویر ترکیبی:</p>
+        <input type="text" value="${imgixURL}" readonly onclick="this.select()">
+        <br><br><a href="${imgixURL}" target="_blank">👁 مشاهده تصویر</a>
+      `;
     }
-    
-    // تابع کمکی برای لود کردن تصویر به صورت آسنکرون
-    function loadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        // برای حل مشکل CORS در زمان استفاده از canvas
-        img.crossOrigin = "Anonymous"; 
-        img.onload = () => resolve(img);
-        img.onerror = (e) => reject(`خطا در بارگذاری تصویر: ${src}`);
-        img.src = src;
-      });
-    }
-
   </script>
 
 </body>
