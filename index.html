@@ -57,138 +57,138 @@
     </div>
 
     <script>
-        const FRAME_IMAGE_URLS = {
-            frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
-            frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
-            frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
-        };
+    const FRAME_IMAGE_URLS = {
+        frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
+        frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
+        frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        let EitaaApp;
+        let isEitaaEnv = false;
+
+        try {
+            EitaaApp = window.Eitaa.WebApp;
+            EitaaApp.ready();
+            isEitaaEnv = true;
+        } catch (error) {
+            console.log("خارج از محیط ایتا اجرا می‌شود.");
+        }
+
+        const uploadInput = document.getElementById('image-upload');
+        const uploadButton = document.getElementById('upload-button');
+        const frameSelectionDiv = document.getElementById('frame-selection');
+        const statusDiv = document.getElementById('status');
+        const canvas = document.getElementById('image-canvas');
         
-        document.addEventListener('DOMContentLoaded', function() {
-            let EitaaApp;
-            let isEitaaEnv = false;
+        let userImageObjectUrl = null;
+
+        uploadInput.addEventListener('change', handleImageUpload);
+
+        if (isEitaaEnv) {
+            EitaaApp.MainButton
+                .setText("شروع مجدد")
+                .onClick(resetApp)
+                .hide(); // در ابتدا مخفی است
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
+            userImageObjectUrl = URL.createObjectURL(file);
+
+            showFrameSelection();
+            uploadButton.style.display = 'none';
+            statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
+        }
+
+        function showFrameSelection() {
+            frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
+            Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
+                const button = document.createElement('button');
+                button.innerText = `🖼️ قاب ${index + 1}`;
+                button.className = 'action-button';
+                button.onclick = () => {
+                    frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                    statusDiv.innerText = "⏳ در حال ساخت تصویر شما... لطفاً صبر کنید.";
+                    createAndOpenImage(userImageObjectUrl, FRAME_IMAGE_URLS[key]);
+                };
+                frameSelectionDiv.appendChild(button);
+            });
+            frameSelectionDiv.style.display = 'block';
+            // ### خطای اصلی اینجا بود - این خط حذف شد ###
+            // if (isEitaaEnv) EitaaApp.MainButton.show(); 
+        }
+
+        async function createAndOpenImage(userImageUrl, frameUrl) {
+            const ctx = canvas.getContext('2d');
+            const loadImage = (src) => new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; 
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(err);
+                img.src = src;
+            });
 
             try {
-                EitaaApp = window.Eitaa.WebApp;
-                EitaaApp.ready();
-                isEitaaEnv = true;
-            } catch (error) {
-                console.log("خارج از محیط ایتا اجرا می‌شود.");
-            }
-
-            const uploadInput = document.getElementById('image-upload');
-            const uploadButton = document.getElementById('upload-button');
-            const frameSelectionDiv = document.getElementById('frame-selection');
-            const statusDiv = document.getElementById('status');
-            const canvas = document.getElementById('image-canvas');
-            
-            let userImageObjectUrl = null;
-
-            uploadInput.addEventListener('change', handleImageUpload);
-
-            if (isEitaaEnv) {
-                EitaaApp.MainButton
-                    .setText("شروع مجدد")
-                    .onClick(resetApp)
-                    .hide();
-            }
-
-            function handleImageUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
+                const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
+                const size = 512;
+                canvas.width = size;
+                canvas.height = size;
                 
-                if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
-                userImageObjectUrl = URL.createObjectURL(file);
-
-                showFrameSelection();
-                uploadButton.style.display = 'none';
-                statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
-            }
-
-            function showFrameSelection() {
-                frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
-                Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
-                    const button = document.createElement('button');
-                    button.innerText = `🖼️ قاب ${index + 1}`;
-                    button.className = 'action-button';
-                    button.onclick = () => {
-                        frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                        statusDiv.innerText = "⏳ در حال ساخت تصویر شما... لطفاً صبر کنید.";
-                        createAndOpenImage(userImageObjectUrl, FRAME_IMAGE_URLS[key]);
-                    };
-                    frameSelectionDiv.appendChild(button);
-                });
-                frameSelectionDiv.style.display = 'block';
-                if (isEitaaEnv) EitaaApp.MainButton.show();
-            }
-
-            async function createAndOpenImage(userImageUrl, frameUrl) {
-                const ctx = canvas.getContext('2d');
-                const loadImage = (src) => new Promise((resolve, reject) => {
-                    const img = new Image();
-                    // این خط برای جلوگیری از خطای امنیتی canvas هنگام بارگذاری عکس از دامنه دیگر ضروری است
-                    img.crossOrigin = "Anonymous"; 
-                    img.onload = () => resolve(img);
-                    img.onerror = (err) => reject(err);
-                    img.src = src;
-                });
-
-                try {
-                    const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
-                    const size = 512;
-                    canvas.width = size;
-                    canvas.height = size;
-                    
-                    // محاسبه ابعاد برای پوشش کامل canvas توسط تصویر کاربر (crop-to-fit)
-                    const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-                    let drawWidth, drawHeight, x, y;
-                    if (imgAspectRatio > 1) { // تصویر عریض‌تر است
-                        drawHeight = size;
-                        drawWidth = drawHeight * imgAspectRatio;
-                        x = (size - drawWidth) / 2;
-                        y = 0;
-                    } else { // تصویر بلندتر است
-                        drawWidth = size;
-                        drawHeight = drawWidth / imgAspectRatio;
-                        x = 0;
-                        y = (size - drawHeight) / 2;
-                    }
-
-                    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
-                    ctx.drawImage(frameImg, 0, 0, size, size); // قاب را روی تصویر می‌کشیم
-                    
-                    const finalDataUrl = canvas.toDataURL('image/png');
-
-                    // مهم: تصویر ساخته شده را در یک لینک جدید باز می‌کنیم
-                    if (isEitaaEnv) {
-                        EitaaApp.openLink(finalDataUrl);
-                        statusDiv.innerText = "تصویر شما آماده شد! برای ذخیره، روی آن نگه دارید.";
-                    } else {
-                        // برای تست در مرورگر معمولی
-                        window.open(finalDataUrl, '_blank');
-                        statusDiv.innerText = "تصویر در تب جدید باز شد. می‌توانید آن را ذخیره کنید.";
-                    }
-
-                } catch (error) {
-                    statusDiv.innerText = "خطا در بارگذاری قاب. لطفا از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
-                    console.error("Image processing error:", error);
-                    // فعال کردن مجدد دکمه‌ها در صورت خطا
-                    frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+                let drawWidth, drawHeight, x, y;
+                if (imgAspectRatio > 1) {
+                    drawHeight = size;
+                    drawWidth = drawHeight * imgAspectRatio;
+                    x = (size - drawWidth) / 2;
+                    y = 0;
+                } else {
+                    drawWidth = size;
+                    drawHeight = drawWidth / imgAspectRatio;
+                    x = 0;
+                    y = (size - drawHeight) / 2;
                 }
-            }
 
-            function resetApp() {
-                uploadButton.style.display = 'inline-block';
-                frameSelectionDiv.style.display = 'none';
-                frameSelectionDiv.innerHTML = ''; // محتوای دکمه‌ها را پاک می‌کند
-                statusDiv.innerText = '';
-                uploadInput.value = ''; // مهم: برای امکان انتخاب مجدد همان فایل
-                if (userImageObjectUrl) {
-                    URL.revokeObjectURL(userImageObjectUrl);
-                    userImageObjectUrl = null;
+                ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+                ctx.drawImage(frameImg, 0, 0, size, size);
+                
+                const finalDataUrl = canvas.toDataURL('image/png');
+
+                if (isEitaaEnv) {
+                    EitaaApp.openLink(finalDataUrl);
+                    statusDiv.innerHTML = "✅ تصویر شما آماده شد!<br>برای ذخیره، روی آن نگه دارید و یا از منوی سه نقطه استفاده کنید.";
+                    // ### اصلاح اصلی: دکمه شروع مجدد فقط در اینجا نمایش داده می‌شود ###
+                    EitaaApp.MainButton.show();
+                } else {
+                    window.open(finalDataUrl, '_blank');
+                    statusDiv.innerText = "تصویر در تب جدید باز شد. می‌توانید آن را ذخیره کنید.";
                 }
-                if (isEitaaEnv) EitaaApp.MainButton.hide();
+
+            } catch (error) {
+                statusDiv.innerText = "خطا در بارگذاری قاب. لطفا از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
+                console.error("Image processing error:", error);
+                frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
             }
-        });
-    </script>
+        }
+
+        function resetApp() {
+            uploadButton.style.display = 'inline-block';
+            frameSelectionDiv.style.display = 'none';
+            frameSelectionDiv.innerHTML = '';
+            statusDiv.innerText = '';
+            uploadInput.value = '';
+            if (userImageObjectUrl) {
+                URL.revokeObjectURL(userImageObjectUrl);
+                userImageObjectUrl = null;
+            }
+            if (isEitaaEnv) {
+                EitaaApp.MainButton.hide();
+            }
+        }
+    });
+</script>
 </body>
 </html>
