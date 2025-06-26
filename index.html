@@ -133,7 +133,6 @@
                 });
                 frameSelectionDiv.style.display = 'block';
             }
-            
             // این تابع را به طور کامل در کد خود جایگزین کنید
 async function createFramedImage(userImageUrl, frameUrl) {
     const ctx = canvas.getContext('2d');
@@ -165,55 +164,60 @@ async function createFramedImage(userImageUrl, frameUrl) {
 
         statusDiv.innerText = "⏳ در حال آپلود تصویر نهایی... این ممکن است چند ثانیه طول بکشد.";
         
-        // تبدیل canvas به Blob و ارسال به Freeimage.host
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            // نام فیلد بر اساس مستندات API باید 'source' باشد
-            formData.append('source', blob); 
-            // نوع درخواست باید 'file' باشد
-            formData.append('type', 'file'); 
-            // فرمت پاسخ را json می‌خواهیم
-            formData.append('format', 'json');
+        // -------------------- شروع بخش اصلی: آپلود در ImgBB --------------------
 
-            // -------------------- شروع بخش اصلی: آپلود در Freeimage.host --------------------
-            const apiKey = '6d207e02198a847aa98d0a2a901485a5'; // !!! کلید API که از سایت گرفتید را اینجا قرار دهید !!!
-            const apiUrl = `https://freeimage.host/api/1/upload?key=${apiKey}`;
+        // 1. کلید API که از سایت ImgBB گرفته‌اید را اینجا قرار دهید
+        const apiKey = "37d5e60ceda885439b1bdcbab0ee0e00"; // !!! کلید خود را جایگزین کنید !!!
+        if (apiKey === "37d5e60ceda885439b1bdcbab0ee0e00") {
+             statusDiv.innerText = "خطا: لطفاً کلید API سرویس ImgBB را در کد قرار دهید.";
+             frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
+             return;
+        }
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    body: formData,
-                });
+        // 2. تبدیل canvas به فرمت Base64 برای ارسال
+        // ما قسمت 'data:image/png;base64,' را حذف می‌کنیم چون API فقط خود رشته را می‌خواهد
+        const base64Image = canvas.toDataURL('image/png').split(',')[1];
 
-                const result = await response.json();
+        // 3. ساختن FormData برای ارسال به API
+        const formData = new FormData();
+        formData.append('image', base64Image); // پارامتر 'image' بر اساس مستندات ImgBB
 
-                // بر اساس مستندات، وضعیت موفقیت‌آمیز کد 200 دارد
-                if (result.status_code === 200) {
-                    const imageUrl = result.image.url; // این لینک معتبری است که ما نیاز داریم!
-                    
-                    frameSelectionDiv.style.display = 'none';
+        const apiUrl = `https://api.imgbb.com/1/upload?key=${apiKey}`;
 
-                    if (isEitaaEnv) {
-                        EitaaApp.openLink(imageUrl);
-                        statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (سه نقطه) استفاده کنید.";
-                        EitaaApp.MainButton.show();
-                    } else {
-                        window.open(imageUrl, '_blank');
-                        statusDiv.innerText = "✅ تصویر شما در تب جدید باز شد!";
-                    }
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const imageUrl = result.data.url; // این لینک مستقیم تصویر آپلود شده است
+                
+                frameSelectionDiv.style.display = 'none';
+
+                if (isEitaaEnv) {
+                    EitaaApp.openLink(imageUrl);
+                    statusDiv.innerHTML = "✅ تصویر شما در نمای جدید باز شد.<br>برای ذخیره، از منوی گزینه‌ها (سه نقطه) استفاده کنید.";
+                    EitaaApp.MainButton.show();
                 } else {
-                    console.error("Freeimage.host API Error:", result);
-                    statusDiv.innerText = `خطا در آپلود: ${result.status_txt}`;
-                    frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                    // برای نمایش در مرورگر عادی، نتیجه را در صفحه نشان می‌دهیم
+                    resultImage.src = imageUrl;
+                    resultContainer.style.display = 'block';
+                    statusDiv.innerHTML = '✅ تصویر شما با موفقیت ساخته شد! <a href="' + imageUrl + '" target="_blank" class="action-button">ذخیره تصویر</a>';
                 }
-            } catch (uploadError) {
-                console.error("Upload fetch error:", uploadError);
-                statusDiv.innerText = "خطا در ارتباط با سرور آپلود. از اتصال اینترنت مطمئن شوید.";
+            } else {
+                console.error("ImgBB API Error:", result);
+                statusDiv.innerText = `خطا در آپلود: ${result.error.message}`;
                 frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
             }
-            // -------------------- پایان بخش اصلی --------------------
-
-        }, 'image/png');
+        } catch (uploadError) {
+            console.error("Upload fetch error:", uploadError);
+            statusDiv.innerText = "خطا در ارتباط با سرور آپلود. از اتصال اینترنت مطمئن شوید.";
+            frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        // -------------------- پایان بخش اصلی --------------------
 
     } catch (error) {
         statusDiv.innerText = error.message;
