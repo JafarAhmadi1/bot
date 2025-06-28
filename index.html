@@ -32,16 +32,6 @@
             max-width: 600px;
             margin: 0 auto;
         }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 16px;
-            color: var(--hint-color);
-        }
         
         .action-button {
             display: inline-block;
@@ -55,7 +45,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
-            text-decoration: none; /* برای تگ <a> */
+            text-decoration: none;
             margin-left: 5px;
             margin-right: 5px;
         }
@@ -63,26 +53,11 @@
             opacity: 0.9;
         }
 
-        #frame-selection button {
-            margin: 5px;
-        }
-        
-        #image-upload {
-            display: none;
-        }
-        
-        #image-canvas {
+        #image-upload, #image-canvas {
             display: none;
         }
 
-        #result-container {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: var(--secondary-bg-color);
-            border-radius: 12px;
-        }
-
-        #result-image {
+        #result-image-preview, #final-image-display {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
@@ -92,7 +67,12 @@
         #status {
             margin-top: 15px;
             font-weight: bold;
-            min-height: 24px; /* برای جلوگیری از پرش صفحه */
+            min-height: 24px;
+        }
+
+        /* بخش‌های مختلف برنامه برای نمایش و مخفی‌سازی */
+        .view {
+            width: 100%;
         }
 
     </style>
@@ -100,32 +80,37 @@
 <body>
 
     <div class="container">
-        <h1>🇮🇷 پویش پرچم بالا</h1>
-        <p> سلام به پویش پرچم بالا خوش آومدید.برای حمایت از *ایران جان* و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
-        
-        <!-- مرحله ۱: دکمه برای انتخاب عکس -->
-        <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
-        <input type="file" id="image-upload" accept="image/*">
 
-        <!-- مرحله ۲: انتخاب قاب (در ابتدا مخفی است) -->
-        <div id="frame-selection" style="display: none;">
-            <p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>
+        <!-- بخش اول: صفحه اصلی و ساخت تصویر -->
+        <div id="creation-view" class="view">
+            <h1>🇮🇷 پویش پرچم بالا</h1>
+            <p>سلام به پویش پرچم بالا خوش آمدید. برای حمایت از *ایران جان* و تزئین تصویرتان با پرچم سه رنگ ایران عزیز، لطفاً تصویر پروفایل خود را ارسال کنید.</p>
+            
+            <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
+            <input type="file" id="image-upload" accept="image/*">
+
+            <div id="frame-selection" style="display: none;">
+                <p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>
+                <!-- دکمه‌های قاب اینجا اضافه می‌شوند -->
+            </div>
+
+            <div id="status"></div>
+
+            <canvas id="image-canvas"></canvas>
         </div>
 
-        <!-- نمایش وضعیت پردازش -->
-        <div id="status"></div>
-
-        <!-- مرحله ۳: نمایش نتیجه (در ابتدا مخفی است) -->
-        <div id="result-container" style="display: none;">
-            <h3>تصویر شما آماده شد!</h3>
-            <canvas id="image-canvas"></canvas>
-            <!-- فقط برای پیش‌نمایش -->
-            <img id="result-image" alt="پیش‌نمایش تصویر نهایی">
-            <div>
-                <!-- تغییر: این دکمه صفحه دانلود را باز می‌کند -->
-                <button id="open-download-page-button" class="action-button">مشاهده و دانلود تصویر</button>
+        <!-- بخش دوم: صفحه دانلود -->
+        <div id="download-view" class="view" style="display: none;">
+             <h3>تصویر شما آماده شد!</h3>
+             <p>برای ذخیره، روی دکمه "دانلود تصویر" کلیک کنید. در گوشی موبایل، می‌توانید روی تصویر انگشت خود را نگه داشته و گزینه "ذخیره تصویر" یا "Download image" را انتخاب کنید.</p>
+             
+             <img id="final-image-display" alt="تصویر نهایی با قاب">
+             
+             <div>
+                <!-- این لینک دانلود حالا در محیط وب‌اپ هم کار می‌کند چون صفحه عوض نشده -->
+                <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
-            </div>
+             </div>
         </div>
 
     </div>
@@ -149,15 +134,18 @@
                 console.log("در حال اجرا خارج از محیط ایتا");
             }
 
+            // تعریف متغیرهای مربوط به عناصر UI
+            const creationView = document.getElementById('creation-view');
+            const downloadView = document.getElementById('download-view');
+
             const uploadInput = document.getElementById('image-upload');
             const uploadButton = document.getElementById('upload-button');
             const frameSelectionDiv = document.getElementById('frame-selection');
             const statusDiv = document.getElementById('status');
-            const resultContainer = document.getElementById('result-container');
             const canvas = document.getElementById('image-canvas');
-            const resultImage = document.getElementById('result-image');
-            // تغییر: دکمه باز کردن صفحه دانلود
-            const openDownloadPageButton = document.getElementById('open-download-page-button');
+            
+            const finalImageDisplay = document.getElementById('final-image-display');
+            const downloadLink = document.getElementById('download-link');
             const restartButton = document.getElementById('restart-button');
             
             let userImageObjectUrl = null;
@@ -165,11 +153,6 @@
             // اتصال رویدادها
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
-            // تغییر: اتصال رویداد دکمه جدید
-            openDownloadPageButton.addEventListener('click', () => {
-                // یک تب/پنجره جدید با صفحه دانلود باز می‌کند
-                window.open('download.html', '_blank');
-            });
             
             if (isEitaaEnv) {
                 EitaaApp.MainButton.setText("شروع مجدد");
@@ -248,15 +231,13 @@
 
                     const finalImageDataUrl = canvas.toDataURL('image/png');
                     
-                    // تغییر: داده تصویر را در حافظه موقت مرورگر ذخیره می‌کنیم
-                    sessionStorage.setItem('generatedImageData', finalImageDataUrl);
+                    // تنظیم مقادیر در بخش دانلود
+                    finalImageDisplay.src = finalImageDataUrl;
+                    downloadLink.href = finalImageDataUrl;
 
-                    // تصویر را برای پیش‌نمایش در صفحه اصلی نمایش می‌دهیم
-                    resultImage.src = finalImageDataUrl;
-
-                    frameSelectionDiv.style.display = 'none';
-                    statusDiv.style.display = 'none';
-                    resultContainer.style.display = 'block';
+                    // تعویض نماها (Views)
+                    creationView.style.display = 'none';
+                    downloadView.style.display = 'block';
 
                     if (isEitaaEnv) {
                         EitaaApp.MainButton.show();
@@ -264,26 +245,28 @@
                 } catch (error) {
                     statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
-                    resetApp();
+                    resetApp(); // در صورت خطا، برنامه را ریست کن
                 }
             }
 
             function resetApp() {
+                // نمایش و مخفی کردن نماها
+                creationView.style.display = 'block';
+                downloadView.style.display = 'none';
+
+                // نمایش و مخفی کردن عناصر داخلی بخش ساخت
                 uploadButton.style.display = 'inline-block';
                 frameSelectionDiv.style.display = 'none';
-                resultContainer.style.display = 'none';
-                statusDiv.style.display = 'block';
+                frameSelectionDiv.innerHTML = ''; // پاک کردن دکمه‌های قاب قبلی
                 statusDiv.innerText = '';
                 
+                // پاک کردن داده‌های قبلی
                 uploadInput.value = '';
                 if (userImageObjectUrl) {
                     URL.revokeObjectURL(userImageObjectUrl);
                     userImageObjectUrl = null;
                 }
                 
-                // تغییر: پاک کردن داده از حافظه موقت هنگام شروع مجدد
-                sessionStorage.removeItem('generatedImageData');
-
                 if (isEitaaEnv) {
                     EitaaApp.MainButton.hide();
                 }
