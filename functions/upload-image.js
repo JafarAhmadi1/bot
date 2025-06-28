@@ -17,7 +17,7 @@ export async function onRequestPost(context) {
 
         // 2. قرار دادن مستقیم کلید API برای تست
         // هشدار: این روش ناامن است. پس از تست موفق، آن را با متغیر محیطی جایگزین کنید.
-        const apiKey = "YOUR_IMGBB_API_KEY_HERE";
+        const apiKey = "37d5e60ceda885439b1bdcbab0ee0e00";
 
         // 3. جدا کردن بخش Base64 از داده تصویر
         const base64Data = imageData.split(',')[1];
