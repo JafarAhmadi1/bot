@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پویش پرچم بالا</title>
     
-    <!-- اتصال اسکریپت اصلی ایتا -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
@@ -25,96 +24,85 @@
             margin: 0;
             padding: 20px;
             text-align: center;
-            transition: color 0.2s, background-color 0.2s;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 16px;
-            color: var(--hint-color);
-        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { font-size: 16px; color: var(--hint-color); }
         
         .action-button {
-            display: inline-block;
-            padding: 12px 25px;
-            margin-top: 15px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--button-color);
-            color: var(--button-text-color);
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            text-decoration: none;
-            margin-left: 5px;
-            margin-right: 5px;
+            display: inline-block; padding: 12px 25px; margin-top: 15px; border: none;
+            border-radius: 8px; background-color: var(--button-color); color: var(--button-text-color);
+            font-size: 16px; font-weight: bold; cursor: pointer; text-decoration: none;
+            margin-left: 5px; margin-right: 5px;
         }
-        .action-button:hover {
-            opacity: 0.9;
-        }
+        .action-button:hover { opacity: 0.9; }
 
-        #frame-selection button {
-            margin: 5px;
-        }
-        
-        #image-upload {
-            display: none;
-        }
-        
-        #image-canvas {
-            display: none;
-        }
+        #image-upload, #image-canvas { display: none; }
 
         #result-container {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: var(--secondary-bg-color);
+            margin-top: 20px; padding: 10px; background-color: var(--secondary-bg-color);
             border-radius: 12px;
         }
 
         #result-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            border: 2px solid var(--hint-color);
+            max-width: 100%; height: auto; border-radius: 8px; border: 2px solid var(--hint-color);
+            cursor: pointer; /* تغییر: اضافه کردن نشانگر کلیک */
         }
 
-        #status {
-            margin-top: 15px;
+        #status { margin-top: 15px; font-weight: bold; min-height: 24px; }
+        
+        #save-instruction {
+            font-size: 14px; font-weight: bold; color: var(--text-color); margin-top: 15px;
+            padding: 10px; background-color: rgba(0, 0, 0, 0.05); border-radius: 8px;
+        }
+
+        /* بخش جدید: استایل‌های مودال تصویر */
+        #image-modal {
+            display: none; /* در ابتدا مخفی */
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            /* برای وسط‌چین کردن محتوا */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #modal-content {
+            max-width: 90%;
+            max-height: 80%;
+        }
+
+        #modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
             font-weight: bold;
-            min-height: 24px;
+            cursor: pointer;
         }
         
-        /* تغییر: اضافه کردن استایل برای متن راهنمای ذخیره */
-        #save-instruction {
-            font-size: 14px;
-            font-weight: bold;
-            color: var(--text-color);
-            margin-top: 15px;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
+        #modal-instruction {
+            color: white;
+            font-size: 16px;
+            margin-top: 20px;
+            padding: 0 20px;
         }
-
+        /* پایان بخش جدید */
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>🇮🇷 پویش پرچم بالا</h1>
-        <p> سلام به پویش پرچم بالا خوش آومدید.برای حمایت از *ایران جان* و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+        <p>برای حمایت از *ایران جان* و تزئین تصویر پروفایل خود با پرچم سه رنگ ایران عزیز، لطفا تصویرتان را انتخاب کنید.</p>
         
-        <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
+        <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر</label>
         <input type="file" id="image-upload" accept="image/*">
 
         <div id="frame-selection" style="display: none;">
@@ -125,30 +113,25 @@
 
         <div id="result-container" style="display: none;">
             <h3>تصویر شما آماده شد!</h3>
-            <canvas id="image-canvas"></canvas>
+            <p id="save-instruction">👇 **برای ذخیره، روی تصویر زیر کلیک کنید.** 👇</p>
             <img id="result-image" alt="تصویر نهایی با قاب">
-            
-            <!-- تغییر: این بخش برای مدیریت دکمه دانلود و راهنمای ذخیره است -->
-            <div id="save-instruction" style="display: none;">
-                برای ذخیره، روی تصویر بالا انگشت خود را نگه دارید و گزینه‌ی "ذخیره تصویر" را انتخاب کنید.
-            </div>
-            
             <div>
-                <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a>
+                <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود (مرورگر)</a>
                 <button id="restart-button" class="action-button">شروع مجدد</button>
             </div>
         </div>
+    </div>
 
+    <!-- بخش جدید: ساختار HTML مودال -->
+    <div id="image-modal">
+        <span id="modal-close">×</span>
+        <img id="modal-content" alt="تصویر بزرگ شده برای ذخیره">
+        <p id="modal-instruction">حالا روی این تصویر انگشت خود را نگه دارید و گزینه‌ی "ذخیره" را انتخاب کنید.</p>
     </div>
 
     <script>
-        const FRAME_IMAGE_URLS = {
-            frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
-            frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
-            frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
-        };
-        
         document.addEventListener('DOMContentLoaded', function() {
+            // ... (بخش تعریف متغیرها مثل قبل)
             let EitaaApp;
             let isEitaaEnv = false;
 
@@ -169,13 +152,33 @@
             const resultImage = document.getElementById('result-image');
             const downloadLink = document.getElementById('download-link');
             const restartButton = document.getElementById('restart-button');
-            const saveInstruction = document.getElementById('save-instruction'); // تغییر: دریافت المان راهنما
             
+            // بخش جدید: دریافت المان‌های مودال
+            const imageModal = document.getElementById('image-modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalClose = document.getElementById('modal-close');
+
             let userImageObjectUrl = null;
 
+            // ... (بخش showFrameSelection و handleImageUpload مثل قبل)
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
-            
+
+            // بخش جدید: رویدادهای مربوط به مودال
+            resultImage.addEventListener('click', () => {
+                modalContent.src = resultImage.src;
+                imageModal.style.display = 'flex';
+            });
+            modalClose.addEventListener('click', () => {
+                imageModal.style.display = 'none';
+            });
+            // بستن مودال با کلیک روی پس‌زمینه
+            imageModal.addEventListener('click', (event) => {
+                if (event.target === imageModal) {
+                    imageModal.style.display = 'none';
+                }
+            });
+
             if (isEitaaEnv) {
                 EitaaApp.MainButton.setText("شروع مجدد");
                 EitaaApp.MainButton.onClick(resetApp);
@@ -183,19 +186,20 @@
             }
 
             function handleImageUpload(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                
+                const file = event.target.files[0]; if (!file) return;
                 if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
                 userImageObjectUrl = URL.createObjectURL(file);
-
                 showFrameSelection();
-                
                 uploadButton.style.display = 'none';
                 statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
             }
 
             function showFrameSelection() {
+                const FRAME_IMAGE_URLS = {
+                    frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
+                    frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
+                    frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
+                };
                 frameSelectionDiv.innerHTML = '<p style="margin-top:20px;">۲. یکی از قاب‌های زیر را انتخاب کنید:</p>';
                 Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
                     const button = document.createElement('button');
@@ -214,34 +218,17 @@
             async function createFramedImage(userImageUrl, frameUrl) {
                 const ctx = canvas.getContext('2d');
                 const loadImage = (src) => new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.crossOrigin = "Anonymous";
-                    img.onload = () => resolve(img);
-                    img.onerror = reject;
-                    img.src = src;
+                    const img = new Image(); img.crossOrigin = "Anonymous";
+                    img.onload = () => resolve(img); img.onerror = reject; img.src = src;
                 });
-
                 try {
                     const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
-
-                    const size = 512;
-                    canvas.width = size;
-                    canvas.height = size;
-
+                    const size = 512; canvas.width = size; canvas.height = size;
                     const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-                    let drawWidth = size, drawHeight = size, x = 0, y = 0;
-
-                    if (imgAspectRatio > 1) {
-                        drawHeight = size;
-                        drawWidth = drawHeight * imgAspectRatio;
-                        x = (size - drawWidth) / 2;
-                    } else {
-                        drawWidth = size;
-                        drawHeight = drawWidth / imgAspectRatio;
-                        y = (size - drawHeight) / 2;
-                    }
-
-                    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+                    let dw = size, dh = size, x = 0, y = 0;
+                    if (imgAspectRatio > 1) { dh = size; dw = dh * imgAspectRatio; x = (size - dw) / 2; } 
+                    else { dw = size; dh = dw / imgAspectRatio; y = (size - dh) / 2; }
+                    ctx.drawImage(userImg, x, y, dw, dh);
                     ctx.drawImage(frameImg, 0, 0, size, size);
 
                     const finalImageDataUrl = canvas.toDataURL('image/png');
@@ -252,18 +239,14 @@
                     statusDiv.style.display = 'none';
                     resultContainer.style.display = 'block';
 
-                    // تغییر: منطق نمایش دکمه‌ها و راهنما
-                    if (isEitaaEnv) {
-                        downloadLink.style.display = 'none'; // دکمه دانلود را در ایتا مخفی کن
-                        saveInstruction.style.display = 'block'; // راهنمای ذخیره را نمایش بده
-                        EitaaApp.MainButton.show();
-                    } else {
-                        downloadLink.style.display = 'inline-block'; // در مرورگر عادی نمایش بده
-                        saveInstruction.style.display = 'none';
-                    }
+                    // تغییر: فقط دکمه دانلود را در خارج از ایتا نمایش می‌دهیم
+                    downloadLink.style.display = isEitaaEnv ? 'none' : 'inline-block';
 
+                    if (isEitaaEnv) {
+                        EitaaApp.MainButton.show();
+                    }
                 } catch (error) {
-                    statusDiv.innerText = "خطا در بارگذاری تصاویر. لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
+                    statusDiv.innerText = "خطا! لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
                     resetApp();
                 }
@@ -273,18 +256,10 @@
                 uploadButton.style.display = 'inline-block';
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'none';
-                statusDiv.style.display = 'block';
                 statusDiv.innerText = '';
-                
                 uploadInput.value = '';
-                if (userImageObjectUrl) {
-                    URL.revokeObjectURL(userImageObjectUrl);
-                    userImageObjectUrl = null;
-                }
-                
-                if (isEitaaEnv) {
-                    EitaaApp.MainButton.hide();
-                }
+                if (userImageObjectUrl) { URL.revokeObjectURL(userImageObjectUrl); userImageObjectUrl = null; }
+                if (isEitaaEnv) { EitaaApp.MainButton.hide(); }
             }
         });
     </script>
