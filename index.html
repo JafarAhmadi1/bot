@@ -6,7 +6,7 @@
     <title>پویش پرچم بالا</title>
     
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
-    
+
     <style>
         :root {
             --bg-color: var(--tg-theme-bg-color, #ffffff);
@@ -45,11 +45,22 @@
             font-size: 14px; font-weight: bold; color: var(--text-color); margin-top: 15px;
             padding: 10px; background-color: rgba(0, 0, 0, 0.05); border-radius: 8px;
         }
+
+        /* --- تغییر کلیدی و اصلاح شده --- */
         #image-modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%; background-color: rgba(0,0,0,0.85);
-            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            display: none; /* مودال باید در ابتدا مخفی باشد */
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            /* خصوصیت display از اینجا حذف شد و به جاوا اسکریپت منتقل شد */
+            /* تا فقط در زمان کلیک، flex شود. */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
         }
+
         #modal-content { max-width: 90%; max-height: 80%; }
         #modal-close {
             position: absolute; top: 15px; right: 35px; color: #f1f1f1;
@@ -82,11 +93,10 @@
     <div id="image-modal">
         <span id="modal-close">×</span>
         <img id="modal-content" alt="تصویر بزرگ شده برای ذخیره">
-        <p id="modal-instruction">000حالا روی این تصویر انگشت خود را نگه دارید و گزینه‌ی "ذخیره" را انتخاب کنید.</p>
+        <p id="modal-instruction">حالا روی این تصویر انگشت خود را نگه دارید و گزینه‌ی "ذخیره" را انتخاب کنید.</p>
     </div>
 
     <script>
-        // *** تغییر کلیدی: بازگرداندن این متغیر به محدوده عمومی ***
         const FRAME_IMAGE_URLS = {
             frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
             frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
@@ -120,10 +130,14 @@
 
             uploadInput.addEventListener('change', handleImageUpload);
             restartButton.addEventListener('click', resetApp);
+            
+            // --- تغییر کلیدی و اصلاح شده در جاوا اسکریپت ---
             resultImage.addEventListener('click', () => {
                 modalContent.src = resultImage.src;
-                imageModal.style.display = 'flex';
+                // به جای اینکه مودال همیشه flex باشد، فقط در زمان کلیک این استایل را می‌گیرد
+                imageModal.style.display = 'flex'; 
             });
+
             modalClose.addEventListener('click', () => {
                 imageModal.style.display = 'none';
             });
@@ -190,7 +204,7 @@
                 } catch (error) {
                     statusDiv.innerText = "خطا! لطفاً از اتصال اینترنت خود مطمئن شوید و دوباره تلاش کنید.";
                     console.error("Image loading error:", error);
-                    resetApp(); // در صورت خطا، برنامه را ریست میکنیم
+                    resetApp();
                 }
             }
 
