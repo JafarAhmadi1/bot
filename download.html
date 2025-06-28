@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلود تصویر - پویش پرچم بالا</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f1f1f1;
+            color: #000000;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #final-image-display {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3390ec;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .action-button:hover {
+            opacity: 0.9;
+        }
+        #error-message {
+            color: #d93025;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="download-container">
+        <h1>تصویر شما آماده دانلود است</h1>
+        <p>برای ذخیره، روی دکمه زیر کلیک کنید. در گوشی‌های موبایل، ممکن است نیاز باشد روی تصویر انگشت خود را نگه دارید و گزینه "ذخیره تصویر" را انتخاب کنید.</p>
+        
+        <img id="final-image-display" alt="تصویر نهایی" style="display: none;">
+        
+        <a id="final-download-link" class="action-button" download="parcham-bala-profile.png" style="display: none;">
+            📥 دانلود تصویر
+        </a>
+        
+        <p id="error-message" style="display: none;">
+            خطا: اطلاعات تصویر یافت نشد. لطفاً به صفحه اصلی بازگردید و مراحل را از ابتدا انجام دهید.
+        </p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageDisplay = document.getElementById('final-image-display');
+            const downloadLink = document.getElementById('final-download-link');
+            const errorMessage = document.getElementById('error-message');
+
+            // خواندن اطلاعات تصویر از حافظه موقت مرورگر
+            const imageData = sessionStorage.getItem('generatedImageData');
+
+            if (imageData) {
+                // اگر داده وجود داشت، آن را به تصویر و لینک دانلود اختصاص بده
+                imageDisplay.src = imageData;
+                downloadLink.href = imageData;
+
+                // نمایش عناصر
+                imageDisplay.style.display = 'block';
+                downloadLink.style.display = 'inline-block';
+            } else {
+                // اگر داده وجود نداشت، پیام خطا نمایش بده
+                document.querySelector('h1').style.display = 'none';
+                document.querySelector('p').style.display = 'none';
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>
