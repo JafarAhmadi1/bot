@@ -15,16 +15,9 @@ export async function onRequestPost(context) {
             });
         }
 
-        // 2. خواندن کلید API از متغیرهای محیطی Cloudflare
-        const apiKey = context.env.IMGBB_API_KEY;
-        if (!apiKey) {
-            // این خطا فقط در سمت سرور لاگ می‌شود و به کاربر پیام عمومی‌تری نمایش داده می‌شود
-            console.error('IMGBB_API_KEY not configured in Cloudflare environment variables.');
-            return new Response(JSON.stringify({ error: 'پیکربندی سرور ناقص است.' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            });
-        }
+        // 2. قرار دادن مستقیم کلید API برای تست
+        // هشدار: این روش ناامن است. پس از تست موفق، آن را با متغیر محیطی جایگزین کنید.
+        const apiKey = "YOUR_IMGBB_API_KEY_HERE";
 
         // 3. جدا کردن بخش Base64 از داده تصویر
         const base64Data = imageData.split(',')[1];
