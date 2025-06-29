@@ -234,7 +234,9 @@
                     // Show the final image
                     statusDiv.textContent = '';
                     resultImage.src = result.finalImageUrl;
-                    downloadLink.href = result.finalImageUrl;
+                    // downloadLink.href = result.finalImageUrl;
+                    downloadLink.href = result.finalImageUrl + '&dl=parcham-bala-profile.png';
+
                     resultContainer.style.display = 'block';
                 } else {
                     throw new Error(result.error || 'یک خطای ناشناخته رخ داد.');
