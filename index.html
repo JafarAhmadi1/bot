@@ -1,0 +1,77 @@
+<!-- در بخش <script> فایل HTML شما -->
+<script>
+    // ... (تمام کدهای دیگر شما: DOM Elements, FRAME_IMAGE_URLS, etc.) ...
+    const CLOUDFLARE_WORKER_URL = 'https://red-moon-03a5.jafar-ahmadi658.workers.dev/'; // آدرس Worker شما
+
+    // ... (توابع showFrameSelection و loadImage بدون تغییر) ...
+
+    async function createFramedImage(userImageUrl, frameUrl) {
+        const ctx = canvas.getContext('2d');
+        // ... (منطق loadImage و try...catch شما کامل و صحیح است) ...
+
+        try {
+            const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
+
+            // ... (منطق برش و کشیدن روی canvas شما) ...
+            ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+            ctx.drawImage(frameImg, 0, 0, size, size);
+
+            // --- شروع تغییرات کلیدی ---
+
+            // 1. دریافت تصویر نهایی به صورت Blob (بهینه‌تر از Data URL برای آپلود)
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    statusDiv.innerText = "خطا در ساخت تصویر نهایی.";
+                    return;
+                }
+
+                // 2. ساخت FormData برای ارسال به Worker
+                const formData = new FormData();
+                formData.append('finalImage', blob, 'parcham-bala-profile.png');
+                
+                // اطلاعات اضافی که ممکن است در آینده نیاز شود (مثلا شناسه کاربر)
+                // formData.append('userId', 'some_user_id'); 
+
+                statusDiv.innerText = "✅ تصویر ساخته شد! در حال ارسال به ربات...";
+
+                // 3. ارسال تصویر نهایی به Cloudflare Worker
+                try {
+                    const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`خطای سرور: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        statusDiv.innerText = "🎉 با موفقیت به ربات شما ارسال شد! می‌توانید آن را در بله مشاهده کنید.";
+                        // می‌توانید اینجا یک دکمه برای باز کردن بله قرار دهید
+                        // یا پیامی برای تشویق کاربر به اشتراک‌گذاری
+                    } else {
+                        throw new Error(result.error || 'خطای ناشناخته از سمت سرور');
+                    }
+
+                } catch (uploadError) {
+                    console.error("Upload Error:", uploadError);
+                    statusDiv.innerText = `خطا در ارسال به ربات: ${uploadError.message}`;
+                }
+
+            }, 'image/png');
+
+            // --- پایان تغییرات کلیدی ---
+
+            // نمایش موقت نتیجه در صفحه وب (این بخش می‌تواند باقی بماند)
+            const finalImageDataUrl = canvas.toDataURL('image/png');
+            resultImage.src = finalImageDataUrl;
+            downloadLink.href = finalImageDataUrl;
+            resultContainer.style.display = 'block';
+
+        } catch (error) {
+            // ... (بخش مدیریت خطای شما) ...
+        }
+    }
+</script>
