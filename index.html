@@ -145,130 +145,116 @@
         </div>
     </div>
 
-   <script>
-    // --- CONFIGURATION ---
-    const CLOUDFLARE_WORKER_URL = 'https://your-worker-name.your-account.workers.dev';
+    <script>
+        // --- CONFIGURATION ---
+        // !!! این آدرس را با آدرس Worker خود که از کلودفلر دریافت کردید جایگزین کنید !!!
+        const CLOUDFLARE_WORKER_URL = 'https://your-worker-name.your-account.workers.dev';
 
-    const FRAME_IMAGE_URLS = {
-        frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
-        frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
-        frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
-    };
+        const FRAME_IMAGE_URLS = {
+            frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
+            frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
+            frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
+        };
 
-    // --- DOM Elements ---
-    const uploadInput = document.getElementById('image-upload');
-    const initialStepDiv = document.getElementById('initial-step');
-    const frameSelectionDiv = document.getElementById('frame-selection');
-    const statusDiv = document.getElementById('status');
-    const resultContainer = document.getElementById('result-container');
-    const resultImage = document.getElementById('result-image');
-    const downloadLink = document.getElementById('download-link');
-    const restartButton = document.getElementById('restart-button');
-    
-    let selectedFile = null;
-
-    // --- Event Listeners (این بخش بدون تغییر است) ---
-    uploadInput.addEventListener('change', (event) => {
-        if (event.target.files && event.target.files[0]) {
-            selectedFile = event.target.files[0];
-            initialStepDiv.style.display = 'none';
-            frameSelectionDiv.style.display = 'block';
-        }
-    });
-
-    restartButton.addEventListener('click', () => {
-        selectedFile = null;
-        uploadInput.value = '';
-        initialStepDiv.style.display = 'block';
-        frameSelectionDiv.style.display = 'none';
-        resultContainer.style.display = 'none';
-        statusDiv.textContent = '';
-        document.querySelectorAll('#frame-selection button').forEach(b => b.classList.remove('selected'));
-        // پاک کردن لینک دانلود قبلی
-        if (downloadLink.href.startsWith('blob:')) {
-            URL.revokeObjectURL(downloadLink.href);
-        }
-        downloadLink.href = '#';
-    });
-
-    // --- Functions ---
-
-    // (تابع createFrameButtons بدون تغییر است)
-    function createFrameButtons() {
-        Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
-            const button = document.createElement('button');
-            button.textContent = `قاب ${index + 1}`;
-            button.dataset.key = key;
-            button.addEventListener('click', () => {
-                document.querySelectorAll('#frame-selection button').forEach(b => b.classList.remove('selected'));
-                button.classList.add('selected');
-                
-                if (selectedFile) {
-                    processImage(selectedFile, key);
-                }
-            });
-            frameSelectionDiv.appendChild(button);
-        });
-    }
-
-    // *** این تابع به طور کامل جایگزین می‌شود ***
-    async function processImage(file, frameKey) {
-        statusDiv.textContent = 'در حال پردازش... لطفاً چند لحظه صبر کنید.';
-        frameSelectionDiv.style.display = 'none';
+        // --- DOM Elements ---
+        const uploadInput = document.getElementById('image-upload');
+        const initialStepDiv = document.getElementById('initial-step');
+        const frameSelectionDiv = document.getElementById('frame-selection');
+        const statusDiv = document.getElementById('status');
+        const resultContainer = document.getElementById('result-container');
+        const resultImage = document.getElementById('result-image');
+        const downloadLink = document.getElementById('download-link');
+        const restartButton = document.getElementById('restart-button');
         
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('frameKey', frameKey);
+        let selectedFile = null;
 
-        try {
-            // مرحله ۱: دریافت لینک نهایی از Worker
-            const workerResponse = await fetch(CLOUDFLARE_WORKER_URL, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!workerResponse.ok) {
-                const errorData = await workerResponse.json();
-                throw new Error(errorData.error || `خطای سرور: ${workerResponse.status}`);
+        // --- Event Listeners ---
+        uploadInput.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files[0]) {
+                selectedFile = event.target.files[0];
+                initialStepDiv.style.display = 'none';
+                frameSelectionDiv.style.display = 'block';
             }
+        });
 
-            const result = await workerResponse.json();
-
-            if (result.success && result.finalImageUrl) {
-                const finalImageUrl = result.finalImageUrl;
-
-                // مرحله ۲: نمایش تصویر نهایی در صفحه
-                resultImage.src = finalImageUrl;
-                statusDiv.textContent = 'در حال آماده‌سازی لینک دانلود...';
-
-                // مرحله ۳: واکشی تصویر به صورت Blob برای فعال کردن دانلود مستقیم
-                const imageResponse = await fetch(finalImageUrl);
-                const imageBlob = await imageResponse.blob();
-                
-                // مرحله ۴: ایجاد یک URL موقت برای Blob و تنظیم دکمه دانلود
-                const blobUrl = URL.createObjectURL(imageBlob);
-                
-                downloadLink.href = blobUrl;
-                downloadLink.setAttribute('download', 'parcham-bala-profile.png'); // نام فایل دانلودی
-
-                statusDiv.textContent = ''; // پاک کردن پیام وضعیت
-                resultContainer.style.display = 'block';
-
-            } else {
-                throw new Error(result.error || 'پاسخ ناموفق از سرور.');
-            }
-
-        } catch (error) {
-            console.error('Error:', error);
-            statusDiv.textContent = `خطا: ${error.message}`;
+        restartButton.addEventListener('click', () => {
+            // Reset UI to initial state
+            selectedFile = null;
+            uploadInput.value = ''; // Clear file input
             initialStepDiv.style.display = 'block';
-            document.getElementById('upload-button').textContent = "تلاش مجدد: انتخاب تصویر";
-        }
-    }
+            frameSelectionDiv.style.display = 'none';
+            resultContainer.style.display = 'none';
+            statusDiv.textContent = '';
+            // Remove selection from frame buttons
+            document.querySelectorAll('#frame-selection button').forEach(b => b.classList.remove('selected'));
+        });
 
-    // --- Initialization ---
-    createFrameButtons();
-</script>
+        // --- Functions ---
+        function createFrameButtons() {
+            Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
+                const button = document.createElement('button');
+                button.textContent = `قاب ${index + 1}`;
+                button.dataset.key = key;
+                button.addEventListener('click', () => {
+                    // Highlight selected button
+                    document.querySelectorAll('#frame-selection button').forEach(b => b.classList.remove('selected'));
+                    button.classList.add('selected');
+                    
+                    if (selectedFile) {
+                        processImage(selectedFile, key);
+                    }
+                });
+                frameSelectionDiv.appendChild(button);
+            });
+        }
+
+        async function processImage(file, frameKey) {
+            // Show loading status
+            statusDiv.textContent = 'در حال پردازش... لطفاً چند لحظه صبر کنید.';
+            frameSelectionDiv.style.display = 'none'; // Hide frame selection during processing
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('frameKey', frameKey);
+
+            try {
+                const response = await fetch(CLOUDFLARE_WORKER_URL, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `خطای سرور: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show the final image
+                    statusDiv.textContent = '';
+                    resultImage.src = result.finalImageUrl;
+                    downloadLink.href = result.finalImageUrl;
+                    resultContainer.style.display = 'block';
+                } else {
+                    throw new Error(result.error || 'یک خطای ناشناخته رخ داد.');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = `خطا: ${error.message}`;
+                // Show restart button in case of error
+                frameSelectionDiv.style.display = 'none';
+                resultContainer.style.display = 'none';
+                initialStepDiv.style.display = 'block';
+                // Find a way to show a restart button or let user re-select
+                document.getElementById('upload-button').textContent = "تلاش مجدد: انتخاب تصویر";
+            }
+        }
+
+        // --- Initialization ---
+        createFrameButtons();
+    </script>
 
 </body>
 </html>
