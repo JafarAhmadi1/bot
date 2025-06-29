@@ -139,7 +139,7 @@
             <h3>تصویر شما آماده شد!</h3>
             <img id="result-image" alt="تصویر نهایی با قاب">
             <div>
-<!--                 <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a> -->
+
 <!--                 <a id="download-link" class="action-button" target="_blank">دانلود تصویر</a> -->
 <!--                      <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a> -->
                     <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
@@ -147,6 +147,7 @@
 <!--                 <p id="download-trigger" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p> -->
                 
 <!--                 <p id="download-success" style="margin-top: 10px; font-size: 13px; color: green;"></p> -->
+                    <a id="download-link" class="action-button">دانلود تصویر نهایی</a>
                
                 <button id="restart-button" class="action-button secondary">شروع مجدد</button>
             </div>
@@ -271,17 +272,16 @@
                     // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a>`;
 
                     
-                    // document.getElementById("download-trigger").dataset.url = finalUrl;
-
-                    // document.getElementById("final-link").textContent = result.finalImageUrl;
-
-                    // const downloadAnchor = document.getElementById("download-link");
-                    // downloadAnchor.href = finalUrl;
-
-                    // پیام موفقیت هنگام کلیک روی لینک دانلود
-                    // downloadAnchor.addEventListener("click", () => {
-                    //   document.getElementById("download-success").textContent = "✅ تصویر با موفقیت دانلود شد.";
-                    // });
+                    const anchor = document.getElementById("download-link");
+                    anchor.addEventListener('click', (e) => {
+                      e.preventDefault(); // مانع از اجرای پیش‌فرض مرورگر
+                      const link = document.createElement("a");
+                      link.href = finalUrl;
+                      link.setAttribute("download", "parcham-bala-profile.png");
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    });
 
 
                     resultContainer.style.display = 'block';
