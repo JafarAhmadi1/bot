@@ -141,7 +141,8 @@
             <div>
 <!--                 <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a> -->
 <!--                 <a id="download-link" class="action-button" target="_blank">دانلود تصویر</a> -->
-                     <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a>
+<!--                      <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a> -->
+                    <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
 
 <!--                 <p id="download-trigger" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p> -->
                 
@@ -262,19 +263,21 @@
                     // downloadLink.href = result.finalImageUrl;
                     // downloadLink.href = result.finalImageUrl; //+ '&dl=parcham-bala-profile.png';
                     
-                    // const finalUrl = result.finalImageUrl + '&dl=parcham-bala-profile.png';
+                    const finalUrl = result.finalImageUrl + '&dl=parcham-bala-profile.png';
                     // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`;
                     // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank">دانلود تصویر نهایی</a>`;
 
                     // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank" class="action-button">دانلود تصویر نهایی</a>`;
+                    document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a>`;
+
 
                     
                     // document.getElementById("download-trigger").dataset.url = finalUrl;
 
                     // document.getElementById("final-link").textContent = result.finalImageUrl;
-                    const finalUrl = result.finalImageUrl + '&dl=parcham-bala-profile.png';
-                    const downloadAnchor = document.getElementById("download-link");
-                    downloadAnchor.href = finalUrl;
+
+                    // const downloadAnchor = document.getElementById("download-link");
+                    // downloadAnchor.href = finalUrl;
 
                     // پیام موفقیت هنگام کلیک روی لینک دانلود
                     downloadAnchor.addEventListener("click", () => {
