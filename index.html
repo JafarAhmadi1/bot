@@ -217,20 +217,20 @@
             });
         }
         
-    document.getElementById("download-trigger").addEventListener("click", () => {
-    const imageUrl = document.getElementById("download-trigger").dataset.url;
-    if (!imageUrl) return;
+//     document.getElementById("download-trigger").addEventListener("click", () => {
+//     const imageUrl = document.getElementById("download-trigger").dataset.url;
+//     if (!imageUrl) return;
 
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.setAttribute("download", "parcham-bala-profile.png");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+//     const link = document.createElement("a");
+//     link.href = imageUrl;
+//     link.setAttribute("download", "parcham-bala-profile.png");
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
 
-    // نمایش پیام موفقیت
-    document.getElementById("download-success").textContent = "✅ تصویر با موفقیت دانلود شد.";
-});
+//     // نمایش پیام موفقیت
+//     document.getElementById("download-success").textContent = "✅ تصویر با موفقیت دانلود شد.";
+// });
 
 
         async function processImage(file, frameKey) {
