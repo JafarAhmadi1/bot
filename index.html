@@ -148,8 +148,7 @@
     <script>
         // --- CONFIGURATION ---
         // !!! این آدرس را با آدرس Worker خود که از کلودفلر دریافت کردید جایگزین کنید !!!
-        const CLOUDFLARE_WORKER_URL = 'https://eite2bale.jafar-ahmadi658.workers.dev';
-    
+        const CLOUDFLARE_WORKER_URL = 'https://your-worker-name.your-account.workers.dev';
 
         const FRAME_IMAGE_URLS = {
             frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
@@ -232,12 +231,11 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // Show the final image
                     statusDiv.textContent = '';
                     resultImage.src = result.finalImageUrl;
-                    const encodedDownloadUrl = encodeURIComponent(result.finalImageUrl);
-                    downloadLink.href = `${CLOUDFLARE_WORKER_URL}?download=true&url=${encodedDownloadUrl}`;
+                    downloadLink.href = result.finalImageUrl;
                     resultContainer.style.display = 'block';
-                    
                 } else {
                     throw new Error(result.error || 'یک خطای ناشناخته رخ داد.');
                 }
