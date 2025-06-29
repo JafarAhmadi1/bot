@@ -257,7 +257,18 @@
 
                     // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" class="action-button" download="parcham-bala-profile.png"> دانلود تصویر نهایی</a>`;
 
-                    document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank" class="action-button">نمایش تصویر نهایی</a>`;
+
+                    document.getElementById("final-link").innerHTML = `<button class="action-button" id="open-image-btn">نمایش تصویر در صفحه جدید</button>`;
+
+                    document.getElementById("open-image-btn").addEventListener("click", () => {
+                      const win = window.open();
+                      if (win) {
+                        win.document.write(`<title>تصویر نهایی</title><img src="${finalUrl}" style="max-width: 100%; display: block; margin: auto;" />`);
+                      } else {
+                        alert("مرورگر اجازه باز کردن پنجره جدید را نداد. لطفاً پاپ‌آپ را فعال کنید.");
+                      }
+                    });
+
 
 
 
