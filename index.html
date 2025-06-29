@@ -232,11 +232,12 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Show the final image
                     statusDiv.textContent = '';
                     resultImage.src = result.finalImageUrl;
-                    downloadLink.href = result.finalImageUrl;
+                    const encodedDownloadUrl = encodeURIComponent(result.finalImageUrl);
+                    downloadLink.href = `${CLOUDFLARE_WORKER_URL}?download=true&url=${encodedDownloadUrl}`;
                     resultContainer.style.display = 'block';
+                    
                 } else {
                     throw new Error(result.error || 'یک خطای ناشناخته رخ داد.');
                 }
