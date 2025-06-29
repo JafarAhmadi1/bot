@@ -141,9 +141,9 @@
             <div>
 <!--                 <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a> -->
                 <a id="download-link" class="action-button" target="_blank">دانلود تصویر</a>
-
                 <button id="restart-button" class="action-button secondary">شروع مجدد</button>
             </div>
+            <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
         </div>
     </div>
 
@@ -167,6 +167,7 @@
         const resultImage = document.getElementById('result-image');
         const downloadLink = document.getElementById('download-link');
         const restartButton = document.getElementById('restart-button');
+        
         
         let selectedFile = null;
 
@@ -239,6 +240,12 @@
                     // downloadLink.href = result.finalImageUrl;
                     downloadLink.href = result.finalImageUrl; //+ '&dl=parcham-bala-profile.png';
                     
+                    const finalUrl = result.finalImageUrl + '&dl=parcham-bala-profile.png';
+                    document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`;
+                    
+                    document.getElementById("final-link").textContent = result.finalImageUrl;
+
+
                     resultContainer.style.display = 'block';
                 } else {
                     throw new Error(result.error || 'یک خطای ناشناخته رخ داد.');
