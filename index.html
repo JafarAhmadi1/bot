@@ -141,8 +141,8 @@
             <div>
 <!--                 <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر</a> -->
 <!--                 <a id="download-link" class="action-button" target="_blank">دانلود تصویر</a> -->
-<!--                 <button id="download-trigger" class="action-button">دانلود تصویر نهایی</button> -->
-                <p id="download-trigger" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
+                <button id="download-trigger" class="action-button">دانلود تصویر نهایی</button>
+<!--                 <p id="download-trigger" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p> -->
                 
                 <p id="download-success" style="margin-top: 10px; font-size: 13px; color: green;"></p>
                
@@ -216,26 +216,21 @@
             });
         }
         
-    document.getElementById("download-trigger").addEventListener("click", async () => {
+    document.getElementById("download-trigger").addEventListener("click", () => {
     const imageUrl = document.getElementById("download-trigger").dataset.url;
     if (!imageUrl) return;
-    try {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "parcham-bala-profile.png";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-        
-        // نمایش پیام موفقیت
-        document.getElementById("download-success").textContent = "✅ تصویر با موفقیت دانلود شد.";
-    } catch (err) {
-        document.getElementById("download-success").textContent = "❌ خطا در دانلود تصویر.";
-    }
+
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.setAttribute("download", "parcham-bala-profile.png");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // نمایش پیام موفقیت
+    document.getElementById("download-success").textContent = "✅ تصویر با موفقیت دانلود شد.";
 });
+
 
         async function processImage(file, frameKey) {
             // Show loading status
