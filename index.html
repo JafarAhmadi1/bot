@@ -172,9 +172,16 @@
             const publicLink = result.url;
             // *** این بخش تغییر کرده است ***
             outputDiv.innerHTML = `
-                <p class="success">✅ تصویر شما با موفقیت آپلود شد!</p>
-                <a href="${publicLink}" class="action-button" download="profile-framed.png">📥 دانلود تصویر</a>
+                <p class="success">✅ تصویر شما آماده است!</p>
+                
+                <p style="margin-top: 1.5em;"><strong>لینک مشاهده (در تب جدید):</strong></p>
+                <a href="${publicLink}" target="_blank" title="برای مشاهده در تب جدید کلیک کنید">${publicLink}</a>
+                
+                <div style="margin-top: 1.5em;">
+                    <a href="${publicLink}" class="action-button" download="profile-framed.png">📥 دانلود مستقیم تصویر</a>
+                </div>
             `;
+            
             frameSelectionDiv.style.display = 'none';
             restartButton.style.display = 'block';
         } else {
