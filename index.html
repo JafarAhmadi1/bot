@@ -5,31 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پویش پرچم بالا</title>
     
+    <!-- کتابخانه وب‌اپ ایتا -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: 2em auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { font-size: 24px; margin-bottom: 10px; color: #0077cc; }
-        p { font-size: 16px; color: #606770; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background-color: #f0f2f5; 
+            color: #1c1e21; 
+            margin: 0; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 2em auto; 
+            background-color: #fff; 
+            padding: 2em; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            font-size: 24px; 
+            margin-bottom: 10px; 
+            color: #0077cc; 
+        }
+        p { 
+            font-size: 16px; 
+            color: #606770; 
+            line-height: 1.6;
+        }
         
-        .action-button { display: inline-block; padding: 12px 25px; margin: 5px; border: none; border-radius: 8px; background-color: #0077cc; color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; text-decoration: none; }
-        .action-button:hover:not(:disabled) { background-color: #005fa3; }
-        .action-button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
-        .secondary-button { background-color: #6c757d; }
-        .secondary-button:hover:not(:disabled) { background-color: #5a6268; }
+        .action-button { 
+            display: inline-block; 
+            padding: 12px 25px; 
+            margin: 5px; 
+            border: none; 
+            border-radius: 8px; 
+            background-color: #0077cc; 
+            color: #ffffff; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: background-color 0.2s, opacity 0.2s; 
+            text-decoration: none; 
+        }
+        .action-button:hover:not(:disabled) { 
+            background-color: #005fa3; 
+        }
+        /* دکمه دانلود را سبز می‌کنیم تا برجسته‌تر باشد */
+        #download-btn {
+            background-color: #28a745;
+        }
+        #download-btn:hover {
+            background-color: #218838;
+        }
+        .secondary-button { 
+            background-color: #6c757d; 
+        }
+        .secondary-button:hover:not(:disabled) { 
+            background-color: #5a6268; 
+        }
 
-        input[type="file"] { display: none; }
+        input[type="file"] { 
+            display: none; 
+        }
         
-        #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        #frame-selection { 
+            margin-top: 20px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+        }
 
-        #output { margin-top: 1.5em; padding: 1em; background-color: #f7f7f7; border-radius: 8px; word-wrap: break-word; min-height: 50px; }
+        #output { 
+            margin-top: 1.5em; 
+            padding: 1em; 
+            background-color: #f7f7f7; 
+            border-radius: 8px; 
+            word-wrap: break-word; 
+            min-height: 50px; 
+        }
         .error { color: #d32f2f; font-weight: bold; }
-        .success { color: #388e3c; font-weight: bold; }
         
-        #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
+        #preview-container img { 
+            max-width: 80%; 
+            height: auto; 
+            border-radius: 8px; 
+            border: 2px solid #ddd; 
+            margin-bottom: 1em; 
+        }
 
-        canvas { display: none; }
+        canvas { 
+            display: none; /* کانواس همیشه مخفی می‌ماند */
+        }
     </style>
 </head>
 <body>
@@ -39,7 +107,7 @@
         
         <!-- بخش انتخاب فایل و قاب -->
         <div id="selection-area">
-            <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+            <p>سلام به پویش پرچم بالا خوش آمدید. برای حمایت از <strong>ایران عزیز</strong> و تزئین تصویر پروفایل خود با پرچم سه رنگ کشورمان، لطفا تصویر خود را انتخاب کنید.</p>
 
             <div>
                 <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
@@ -50,39 +118,37 @@
             </div>
         </div>
         
+        <!-- کانواس برای پردازش تصویر -->
         <canvas id="imageCanvas"></canvas>
 
-        <!-- بخش پیش‌نمایش و تایید -->
+        <!-- بخش پیش‌نمایش و دانلود -->
         <div id="preview-container" style="display: none;">
             <h3>پیش‌نمایش تصویر نهایی</h3>
             <img id="preview-image" alt="پیش‌نمایش تصویر با قاب">
-            <p>آیا از نتیجه راضی هستید؟</p>
+            <p>عالی شد! حالا می‌توانید تصویر نهایی را ذخیره کنید.</p>
             <div id="preview-actions">
+                <a id="download-btn" class="action-button" download="parcham-bala-profile.jpg">📥 دانلود تصویر (JPG)</a>
                 <button id="cancel-preview-btn" class="action-button secondary-button">🔄 انتخاب قاب دیگر</button>
-                <button id="confirm-upload-btn" class="action-button">✅ بله، دانلودش کن</button>
             </div>
         </div>
 
-        <!-- بخش نمایش وضعیت و لینک نهایی -->
+        <!-- بخش نمایش وضعیت -->
         <div id="output">
             <p>منتظر انتخاب شما...</p>
         </div>
-<!--         <div id="final-link"></div> -->
-        <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
 
-        <button id="restart-button" class="action-button secondary-button" style="display: none;">شروع مجدد</button>
+        <button id="restart-button" class="action-button secondary-button" style="display: none; margin-top: 15px;">شروع مجدد</button>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- مقادیر ثابت ---
-        const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
-        const imagekitPublicKey = "public_93KUnZJ92ve8aZ91xGGC7/AXbvo=";
         const FRAME_IMAGE_URLS = {
             frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
             frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
             frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
         };
+        const FINAL_FILENAME = "parcham-bala-profile.jpg";
 
         // --- دسترسی به عناصر ---
         const fileInput = document.getElementById('fileInput');
@@ -91,16 +157,15 @@
         const outputDiv = document.getElementById('output');
         const canvas = document.getElementById('imageCanvas');
         const restartButton = document.getElementById('restart-button');
-        const finalLinkContainer = document.getElementById('final-link');
         const selectionArea = document.getElementById('selection-area');
         const previewContainer = document.getElementById('preview-container');
         const previewImage = document.getElementById('preview-image');
-        const confirmUploadBtn = document.getElementById('confirm-upload-btn');
+        const downloadBtn = document.getElementById('download-btn');
         const cancelPreviewBtn = document.getElementById('cancel-preview-btn');
         
         // --- متغیرهای وضعیت ---
         let userFile = null;
-        let finalImageBlob = null; // برای نگهداری تصویر نهایی قبل از آپلود
+        let currentPreviewUrl = null; // برای مدیریت حافظه
         let EitaaApp, isEitaaEnv = false;
 
         // --- راه‌اندازی اولیه ---
@@ -109,13 +174,15 @@
             EitaaApp.ready();
             isEitaaEnv = true;
             EitaaApp.MainButton.hide();
-        } catch (e) { console.log("در مرورگر معمولی اجرا شد."); }
+        } catch (e) { 
+            console.log("در محیط خارج از ایتا اجرا شد."); 
+        }
 
         // --- رویدادها ---
         fileInput.addEventListener('change', handleFileSelect);
         restartButton.addEventListener('click', resetApp);
-        confirmUploadBtn.addEventListener('click', handleConfirmUpload);
         cancelPreviewBtn.addEventListener('click', cancelPreview);
+        // دکمه دانلود یک تگ <a> است و نیازی به event listener جاوااسکریپت ندارد
 
         function handleFileSelect(event) {
             if (event.target.files.length === 0) return;
@@ -139,15 +206,36 @@
 
         async function generatePreview(frameUrl) {
             selectionArea.style.display = 'none';
+            outputDiv.style.display = 'block';
             outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش...";
 
             try {
-                finalImageBlob = await createFramedImage(userFile, frameUrl);
-                const previewUrl = URL.createObjectURL(finalImageBlob);
-                previewImage.src = previewUrl;
+                const finalImageBlob = await createFramedImage(userFile, frameUrl);
+                
+                // آزاد کردن حافظه URL قبلی اگر وجود داشته باشد
+                if (currentPreviewUrl) {
+                    URL.revokeObjectURL(currentPreviewUrl);
+                }
+
+                currentPreviewUrl = URL.createObjectURL(finalImageBlob);
+
+                previewImage.src = currentPreviewUrl;
+                downloadBtn.href = currentPreviewUrl;
+                downloadBtn.download = FINAL_FILENAME; // نام فایل دانلود را تنظیم می‌کنیم
                 
                 outputDiv.style.display = 'none';
                 previewContainer.style.display = 'block';
+                restartButton.style.display = 'none';
+
+                // راهنمایی برای کاربران ایتا
+                if (isEitaaEnv) {
+                     EitaaApp.MainButton.setText("راهنمای ذخیره تصویر");
+                     EitaaApp.MainButton.onClick(() => {
+                        EitaaApp.showAlert("برای ذخیره، روی دکمه سبز رنگ '📥 دانلود تصویر' در صفحه کلیک کنید.");
+                     });
+                     EitaaApp.MainButton.show();
+                }
+
             } catch (error) {
                 outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
                 restartButton.style.display = 'block';
@@ -159,124 +247,70 @@
             selectionArea.style.display = 'block';
             outputDiv.style.display = 'block';
             outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>';
+            
             // آزاد کردن حافظه مربوط به پیش‌نمایش قبلی
-            if(previewImage.src) URL.revokeObjectURL(previewImage.src);
-            finalImageBlob = null;
-        }
-
-        function handleConfirmUpload() {
-            previewContainer.style.display = 'none';
-            outputDiv.style.display = 'block';
-            if (finalImageBlob) {
-                uploadBlobToImageKit(finalImageBlob);
-            } else {
-                outputDiv.innerHTML = `<p class="error">خطا: تصویری برای آپلود یافت نشد.</p>`;
-                restartButton.style.display = 'block';
+            if(currentPreviewUrl) {
+                URL.revokeObjectURL(currentPreviewUrl);
+                currentPreviewUrl = null;
             }
+            downloadBtn.href = "#"; // لینک دکمه دانلود را خالی کنید
+
+            if(isEitaaEnv) EitaaApp.MainButton.hide();
         }
 
-// این تابع را در کد HTML خود جایگزین کنید
+        async function createFramedImage(userImageFile, frameImageUrl) {
+            const ctx = canvas.getContext('2d');
+            const loadImage = (src) => new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // برای جلوگیری از خطای CORS با تصاویر از هاست دیگر
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر. لطفا از اتصال اینترنت خود مطمئن شوید."));
+                img.src = src;
+            });
 
-async function createFramedImage(userImageFile, frameImageUrl) {
-    const ctx = canvas.getContext('2d');
-    const loadImage = (src) => new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر قاب."));
-        img.src = src;
-    });
-    const userImageUrl = URL.createObjectURL(userImageFile);
-    const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
-    URL.revokeObjectURL(userImageUrl);
-    const size = 512;
-    canvas.width = size; canvas.height = size;
-
-    // برای جلوگیری از پس‌زمینه سیاه در تصاویر شفاف (مثل PNG)
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, size, size);
-
-    const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-    let drawWidth = size, drawHeight = size, x = 0, y = 0;
-    if (imgAspectRatio > 1) {
-        drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
-    } else {
-        drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
-    }
-    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
-    ctx.drawImage(frameImg, 0, 0, size, size);
-    
-    // <<< تغییر کلیدی در اینجا >>>
-    // به جای toBlob(resolve, 'image/png')، از image/jpeg با کیفیت 90% استفاده می‌کنیم
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); 
-}
-
-        
-// این تابع را نیز در کد HTML خود جایگزین کنید
-async function uploadBlobToImageKit(imageBlob) {
-    outputDiv.innerHTML = "در حال دریافت اطلاعات ...";
-    try {
-        const authResponse = await fetch(workerUrl);
-        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت اطلاعات ناموفق بود.");
-        const authData = await authResponse.json();
-        if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
-        
-        outputDiv.innerHTML = "اطلاعات دریافت شد. در حال آپلود تصویر نهایی...";
-        
-        // <<< تغییر نام فایل به jpg >>>
-        const fileName = "parcham-bala-profile.jpg";
-        const formData = new FormData();
-        formData.append("file", imageBlob, fileName);
-        formData.append("publicKey", imagekitPublicKey);
-        formData.append("signature", authData.signature);
-        formData.append("expire", authData.expire);
-        formData.append("token", authData.token);
-        formData.append("fileName", fileName);
-        formData.append("useUniqueFileName", "false");
-        formData.append("folder", "/parcham-bala/");
-
-        const uploadResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-            method: "POST", body: formData
-        });
-        const result = await uploadResponse.json();
-
-        if (uploadResponse.ok) {
-            outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آماده شد.</p>`;
+            const userImageUrl = URL.createObjectURL(userImageFile);
             
-            const viewUrl = result.url;
+            const [userImg, frameImg] = await Promise.all([
+                loadImage(userImageUrl), 
+                loadImage(frameImageUrl)
+            ]);
+
+            URL.revokeObjectURL(userImageUrl); // آزاد کردن حافظه
             
-            // <<< تغییر کلیدی در اینجا >>>
-            // ما دو پارامتر به URL اضافه می‌کنیم:
-            // 1. ?ik-attachment=true  -> برای فعال کردن دانلود مستقیم
-            // 2. &f=jpg             -> برای مجبور کردن فرمت خروجی به JPG
-            const downloadUrl = `${viewUrl}?ik-attachment=true&f=jpg`;
+            const size = 512;
+            canvas.width = size; 
+            canvas.height = size;
 
-            finalLinkContainer.innerHTML = `
-                <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم (JPG)</a>
-                <a href="${viewUrl}" target="_blank" class="action-button secondary-button">👁️ مشاهده آنلاین</a>
-            `;
+            // ایجاد پس زمینه سفید برای جلوگیری از سیاهی در تصاویر PNG شفاف
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
 
-            if (isEitaaEnv) {
-                EitaaApp.MainButton.setText("دانلود تصویر (JPG)");
-                EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
-                EitaaApp.MainButton.show();
+            const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+            let drawWidth = size, drawHeight = size, x = 0, y = 0;
+            
+            // تصویر را به صورت Fill در مرکز کانواس رسم می‌کنیم
+            if (imgAspectRatio > 1) { // تصویر عریض (Landscape)
+                drawHeight = size; 
+                drawWidth = drawHeight * imgAspectRatio; 
+                x = (size - drawWidth) / 2;
+            } else { // تصویر بلند یا مربع (Portrait or Square)
+                drawWidth = size; 
+                drawHeight = drawWidth / imgAspectRatio; 
+                y = (size - drawHeight) / 2;
             }
-
-            restartButton.style.display = 'inline-block';
-
-        } else {
-            throw new Error(`خطا در آپلود در ImageKit.io: ${result.message}`);
+            ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+            ctx.drawImage(frameImg, 0, 0, size, size);
+            
+            // خروجی را با فرمت JPEG و کیفیت 90% ایجاد می‌کنیم
+            return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); 
         }
-    } catch (error) {
-         outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
-         restartButton.style.display = 'block';
-    }
-}
 
         function resetApp() {
             userFile = null;
-            finalImageBlob = null;
-            if(previewImage.src) URL.revokeObjectURL(previewImage.src);
+            if(currentPreviewUrl) {
+                URL.revokeObjectURL(currentPreviewUrl);
+                currentPreviewUrl = null;
+            }
 
             fileInput.value = '';
             selectionArea.style.display = 'block';
@@ -286,7 +320,7 @@ async function uploadBlobToImageKit(imageBlob) {
             previewContainer.style.display = 'none';
             outputDiv.style.display = 'block';
             outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
-            finalLinkContainer.innerHTML = '';
+            downloadBtn.href = '#';
             restartButton.style.display = 'none';
 
             if (isEitaaEnv) {
