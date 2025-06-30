@@ -207,14 +207,14 @@
         
 // این تابع را نیز در کد HTML خود جایگزین کنید
 async function uploadBlobToImageKit(imageBlob) {
-    outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
+    outputDiv.innerHTML = "در حال دریافت اطلاعات ...";
     try {
         const authResponse = await fetch(workerUrl);
-        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت توکن ناموفق بود.");
+        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت اطلاعات ناموفق بود.");
         const authData = await authResponse.json();
         if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
         
-        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر نهایی...";
+        outputDiv.innerHTML = "اطلاعات دریافت شد. در حال آپلود تصویر نهایی...";
         
         // <<< تغییر نام فایل به jpg >>>
         const fileName = "parcham-bala-profile.jpg";
