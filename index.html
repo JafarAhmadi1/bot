@@ -142,8 +142,11 @@
                 // <<<<<<< تغییر کلیدی: ایجاد لینک برای مشاهده و ذخیره دستی >>>>>>>
                 // target="_blank" تصویر را در یک صفحه/تب جدید باز می‌کند.
                 // rel="noopener noreferrer" یک اقدام امنیتی برای لینک‌های target="_blank" است.
-                // const downloadUrl = `${currentPreviewUrl}?ik-attachment=true&f=jpg`;
+
                 saveLinkContainer.innerHTML = `<a href="${currentPreviewUrl}" target="_blank" rel="noopener noreferrer" class="action-button save-button">🖼️ مشاهده و ذخیره تصویر</a>`;
+
+                const downloadUrl = `${currentPreviewUrl}?ik-attachment=true&f=jpg`;
+                saveLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" class="action-button save-button">🖼️ مشاهده و ذخیره تصویر</a>`;
                 
                 outputDiv.style.display = 'none';
                 previewContainer.style.display = 'block';
