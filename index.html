@@ -2,17 +2,20 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>آپلود عکس با Cloudflare Images</title>
+  <title>آپلود عکس به ImageKit.io</title>
   <style>
-    body { font-family: sans-serif; direction: rtl; text-align: right; padding: 2em; }
-    #output { margin-top: 1em; }
-    .error { color: red; }
-    .success { color: green; }
+    body { font-family: sans-serif; direction: rtl; text-align: right; padding: 2em; max-width: 600px; margin: auto; }
+    #output { margin-top: 1em; word-wrap: break-word; }
+    .error { color: red; font-weight: bold; }
+    .success { color: green; font-weight: bold; }
+    button { padding: 0.5em 1em; cursor: pointer; }
+    input[type="file"] { border: 1px solid #ccc; padding: 0.5em; }
+    a { color: #0077cc; }
   </style>
 </head>
 <body>
 
-  <h2>آپلود عکس با Cloudflare Images و Worker</h2>
+  <h2>آپلود عکس به ImageKit.io از طریق GitHub و Cloudflare Worker</h2>
 
   <form id="uploadForm">
     <input type="file" id="fileInput" accept="image/*" required>
@@ -23,6 +26,11 @@
   <div id="output"></div>
 
   <script>
+    // --- لطفاً این دو متغیر را با مقادیر خودتان پر کنید ---
+    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/"; // آدرس کامل ورکر خودتان را اینجا بگذارید
+    const imagekitPublicKey = "public_93KUnZJ92ve8aZ91xGGC7/AXbvo="; // کلید عمومی خودتان را اینجا بگذارید
+    const imagekitUrlEndpoint = "https://ik.imagekit.io/kmrxk5bhgx"; // آدرس URL-Endpoint خودتان را اینجا بگذارید
+
     document.getElementById("uploadForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const outputDiv = document.getElementById("output");
@@ -33,42 +41,48 @@
         return;
       }
       
-      outputDiv.innerHTML = "در حال دریافت لینک آپلود...";
+      const file = fileInput.files[0];
+
+      // بررسی مقادیر اولیه
+      if (workerUrl === "https://eite2bale.jafar-ahmadi658.workers.dev/" || imagekitPublicKey === "YOUR_IMAGEKIT_PUBLIC_KEY" || imagekitUrlEndpoint === "YOUR_IMAGEKIT_URL_ENDPOINT") {
+          outputDiv.innerHTML = `<p class="error">لطفاً مقادیر لازم را در کد اسکریپت تنظیم کنید.</p>`;
+          return;
+      }
+
+      outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
 
       try {
-        // ۱. ابتدا از ورکر خودمان یک لینک یکبار مصرف برای آپلود می‌گیریم
-        const workerResponse = await fetch("https://eite2bale.jafar-ahmadi658.workers.dev/");
-        const workerResult = await workerResponse.json();
-
-        if (!workerResponse.ok || !workerResult.uploadURL) {
-          const errorMessage = workerResult.errors?.[0]?.message || "پاسخ ورکر نامعتبر است.";
-          throw new Error(`دریافت لینک آپلود از ورکر با خطا مواجه شد: ${errorMessage}`);
+        // ۱. دریافت توکن، زمان انقضا و امضای دیجیتال از ورکر
+        const authResponse = await fetch(workerUrl);
+        if (!authResponse.ok) {
+          throw new Error("ارتباط با ورکر برای دریافت توکن امنیتی ناموفق بود.");
         }
+        const authData = await authResponse.json();
 
-        const uploadURL = workerResult.uploadURL;
-        outputDiv.innerHTML = "در حال آپلود تصویر...";
+        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر...";
 
-        // ۲. حالا فایل را مستقیماً به لینک دریافتی از Cloudflare Images ارسال می‌کنیم
-        const file = fileInput.files[0];
+        // ۲. ساخت فرم دیتا و ارسال مستقیم به ImageKit.io
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("publicKey", imagekitPublicKey);
+        formData.append("signature", authData.signature);
+        formData.append("expire", authData.expire);
+        formData.append("token", authData.token);
+        formData.append("fileName", file.name); // نام فایل اصلی را حفظ می‌کنیم
 
-        const uploadResponse = await fetch(uploadURL, {
+        const uploadResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
           method: "POST",
           body: formData
         });
-
+        
         const result = await uploadResponse.json();
 
-        if (result.success) {
-          // لینک عمومی تصویر از آرایه variants گرفته می‌شود
-          const publicLink = result.result.variants[0]; 
-          outputDiv.innerHTML = `<p class="success">✅ لینک تصویر: <a href="${publicLink}" target="_blank">${publicLink}</a></p>`;
+        if (uploadResponse.ok) {
+          const publicLink = result.url;
+          outputDiv.innerHTML = `<p class="success">✅ لینک تصویر شما:</p><a href="${publicLink}" target="_blank">${publicLink}</a>`;
         } else {
-          // --- این بخش مهم و جدید است ---
-          // اگر آپلود ناموفق بود، پیام خطای دقیق را از خود کلادفلر نمایش بده
-          const cloudflareError = result.errors[0]?.message || "خطای ناشناخته از سرور آپلود.";
-          throw new Error(`آپلود تصویر با خطا مواجه شد: ${cloudflareError}`);
+          // اگر خود ImageKit خطا داد، پیامش را نمایش می‌دهیم
+          throw new Error(`خطا از ImageKit.io: ${result.message}`);
         }
 
       } catch (error) {
