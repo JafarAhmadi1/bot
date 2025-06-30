@@ -2,16 +2,17 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>آپلود عکس با دریافت لینک</title>
+  <title>آپلود عکس با Cloudflare Images</title>
   <style>
     body { font-family: sans-serif; direction: rtl; text-align: right; padding: 2em; }
-    #output { margin-top: 1em; color: green; }
+    #output { margin-top: 1em; }
+    .error { color: red; }
+    .success { color: green; }
   </style>
 </head>
 <body>
 
-  
-  <h2>ارسال عکس دوم به PostImages از طریق Cloudflare Worker</h2>
+  <h2>آپلود عکس با Cloudflare Images و Worker</h2>
 
   <form id="uploadForm">
     <input type="file" id="fileInput" accept="image/*" required>
@@ -24,27 +25,51 @@
   <script>
     document.getElementById("uploadForm").addEventListener("submit", async function(e) {
       e.preventDefault();
-
+      const outputDiv = document.getElementById("output");
       const fileInput = document.getElementById("fileInput");
+
       if (fileInput.files.length === 0) {
-        alert("لطفاً یک تصویر انتخاب کنید.");
+        outputDiv.innerHTML = `<p class="error">لطفاً یک تصویر انتخاب کنید.</p>`;
         return;
       }
+      
+      outputDiv.innerHTML = "در حال دریافت لینک آپلود...";
 
-      const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
+      try {
+        // ۱. ابتدا از ورکر خودمان یک لینک یکبار مصرف برای آپلود می‌گیریم
+        const workerResponse = await fetch("https://eite2bale.jafar-ahmadi658.workers.dev/");
+        const { uploadURL } = await workerResponse.json();
 
-      // ارسال فایل به Worker خودت. این آدرس باید آدرس واقعی Workerت باشه!
-      const response = await fetch("https://eite2bale.jafar-ahmadi658.workers.dev/", {
-        method: "POST",
-        body: formData
-      });
+        if (!uploadURL) {
+          throw new Error("دریافت لینک آپلود از ورکر با خطا مواجه شد.");
+        }
 
-      const result = await response.json();
-      const link = result?.url || result?.url_short || "لینک یافت نشد";
+        outputDiv.innerHTML = "در حال آپلود تصویر...";
 
-      document.getElementById("output").innerHTML = `✅ لینک تصویر: <a href="${link}" target="_blank">${link}</a>`;
+        // ۲. حالا فایل را مستقیماً به لینک دریافتی از Cloudflare Images ارسال می‌کنیم
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadResponse = await fetch(uploadURL, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await uploadResponse.json();
+
+        if (result.success) {
+          // لینک عمومی تصویر از آرایه variants گرفته می‌شود
+          const publicLink = result.result.variants[0]; 
+          outputDiv.innerHTML = `<p class="success">✅ لینک تصویر: <a href="${publicLink}" target="_blank">${publicLink}</a></p>`;
+        } else {
+          throw new Error("آپلود تصویر با خطا مواجه شد.");
+        }
+
+      } catch (error) {
+        console.error("خطا:", error);
+        outputDiv.innerHTML = `<p class="error">یک خطای غیرمنتظره رخ داد: ${error.message}</p>`;
+      }
     });
   </script>
 
