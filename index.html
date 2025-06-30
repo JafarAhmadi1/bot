@@ -32,7 +32,7 @@
 
     <div class="container">
         <h1>🇮🇷 پویش پرچم بالا</h1>
-        <p>برای ساخت تصویر پروفایل خود، ابتدا عکس ها خود و سپس قاب مورد نظر را انتخاب کنید.</p>
+        <p>برای ساخت تصویر پروفایل خود، ابتدا عکس خود و سپس قاب مورد نظر را انتخاب کنید.</p>
 
         <!-- مرحله ۱: انتخاب تصویر -->
         <div>
@@ -172,16 +172,9 @@
             const publicLink = result.url;
             // *** این بخش تغییر کرده است ***
             outputDiv.innerHTML = `
-                <p class="success">✅ تصویر شما آماده است!</p>
-                
-                <p style="margin-top: 1.5em;"><strong>لینک مشاهده (در تب جدید):</strong></p>
-                <a href="${publicLink}" target="_blank" title="برای مشاهده در تب جدید کلیک کنید">${publicLink}</a>
-                
-                <div style="margin-top: 1.5em;">
-                    <a href="${publicLink}" class="action-button" download="profile-framed.png">📥 دانلود مستقیم تصویر</a>
-                </div>
+                <p class="success">✅ تصویر شما با موفقیت آپلود شد!</p>
+                <a href="${publicLink}" class="action-button" download="profile-framed.png">📥 دانلود تصویر</a>
             `;
-            
             frameSelectionDiv.style.display = 'none';
             restartButton.style.display = 'block';
         } else {
