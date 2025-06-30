@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پویش پرچم بالا</title>
     
-    <!-- اتصال اسکریپت ایتا (طبق درخواست شما، گرچه در این منطق استفاده نمی‌شود) -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
@@ -75,6 +74,9 @@
         .action-button.secondary {
              background-color: #6c757d;
         }
+        .download-button-container {
+            margin-top: 15px;
+        }
 
         #frame-selection button {
             margin: 5px;
@@ -139,15 +141,9 @@
             <h3>تصویر شما آماده شد!</h3>
             <img id="result-image" alt="تصویر نهایی با قاب">
             <div>
-
-<!--                 <a id="download-link" class="action-button" target="_blank">دانلود تصویر</a> -->
-<!--                      <a id="download-link" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a> -->
-                     <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
-
-<!--                 <p id="download-trigger" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p> -->
-                
-<!--                 <p id="download-success" style="margin-top: 10px; font-size: 13px; color: green;"></p> -->
-<!--                     <a id="download-link" class="action-button">دانلود تصویر نهایی</a> -->
+                 <div id="download-button-container">
+                    <!-- The download button will be created here by JS -->
+                </div>
                
                 <button id="restart-button" class="action-button secondary">شروع مجدد</button>
             </div>
@@ -173,7 +169,7 @@
         const statusDiv = document.getElementById('status');
         const resultContainer = document.getElementById('result-container');
         const resultImage = document.getElementById('result-image');
-        const downloadLink = document.getElementById('download-link');
+        const downloadButtonContainer = document.getElementById('download-button-container');
         const restartButton = document.getElementById('restart-button');
         
         
@@ -196,6 +192,7 @@
             frameSelectionDiv.style.display = 'none';
             resultContainer.style.display = 'none';
             statusDiv.textContent = '';
+            downloadButtonContainer.innerHTML = ''; // Clear download button
             // Remove selection from frame buttons
             document.querySelectorAll('#frame-selection button').forEach(b => b.classList.remove('selected'));
         });
@@ -219,8 +216,6 @@
             });
         }
         
-
-
         async function processImage(file, frameKey) {
             // Show loading status
             statusDiv.textContent = 'در حال پردازش... لطفاً چند لحظه صبر کنید.';
@@ -231,6 +226,7 @@
             formData.append('frameKey', frameKey);
 
             try {
+                // The URL now points to the root of the worker for the POST request
                 const response = await fetch(CLOUDFLARE_WORKER_URL, {
                     method: 'POST',
                     body: formData,
@@ -244,30 +240,19 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Show the final image
                     statusDiv.textContent = '';
-                    resultImage.src = result.finalImageUrl;
-                    // downloadLink.href = result.finalImageUrl;
-                    // downloadLink.href = result.finalImageUrl; //+ '&dl=parcham-bala-profile.png';
                     
-                    const finalUrl = result.finalImageUrl + '&dl=parcham-bala-profile.png';
-                    // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`;
-                    // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank">دانلود تصویر نهایی</a>`;
+                    // *** CRITICAL CHANGE ***
+                    // The worker returns a 'downloadUrl' that points back to itself.
+                    // This URL is safe to use as it contains no secrets.
+                    const safeDownloadUrl = result.downloadUrl;
 
-                    document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank" class="action-button">دانلود تصویر نهایی</a>`;
-                    // document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" class="action-button" download="parcham-bala-profile.png">دانلود تصویر نهایی</a>`;
+                    // Set the image source to the safe URL. The browser will make a GET request,
+                    // and the worker will proxy the image.
+                    resultImage.src = safeDownloadUrl;
 
-                    // const anchor = document.getElementById("download-link");
-                    // anchor.addEventListener('click', (e) => {
-                    //   e.preventDefault(); // مانع از اجرای پیش‌فرض مرورگر
-                    //   const link = document.createElement("a");
-                    //   link.href = finalUrl;
-                    //   link.setAttribute("download", "parcham-bala-profile.png");
-                    //   document.body.appendChild(link);
-                    //   link.click();
-                    //   document.body.removeChild(link);
-                    // });
-
+                    // Create the download link dynamically
+                    downloadButtonContainer.innerHTML = `<a href="${safeDownloadUrl}" class="action-button">دانلود تصویر نهایی</a>`;
 
                     resultContainer.style.display = 'block';
                 } else {
