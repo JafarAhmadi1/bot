@@ -175,34 +175,41 @@
             }
         }
 
-        async function createFramedImage(userImageFile, frameImageUrl) {
-            // این تابع بدون تغییر باقی می‌ماند
-            const ctx = canvas.getContext('2d');
-            const loadImage = (src) => new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر قاب."));
-                img.src = src;
-            });
-            const userImageUrl = URL.createObjectURL(userImageFile);
-            const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
-            URL.revokeObjectURL(userImageUrl);
-            const size = 512;
-            canvas.width = size; canvas.height = size;
-            const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-            let drawWidth = size, drawHeight = size, x = 0, y = 0;
-            if (imgAspectRatio > 1) {
-                drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
-            } else {
-                drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
-            }
-            ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
-            ctx.drawImage(frameImg, 0, 0, size, size);
-            return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        }
+// این تابع را در کد HTML خود جایگزین کنید
 
-        // این تابع را در کد HTML خود جایگزین کنید
+async function createFramedImage(userImageFile, frameImageUrl) {
+    const ctx = canvas.getContext('2d');
+    const loadImage = (src) => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر قاب."));
+        img.src = src;
+    });
+    const userImageUrl = URL.createObjectURL(userImageFile);
+    const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
+    URL.revokeObjectURL(userImageUrl);
+    const size = 512;
+    canvas.width = size; canvas.height = size;
+
+    // برای جلوگیری از پس‌زمینه سیاه در تصاویر شفاف (مثل PNG)
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, size, size);
+
+    const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+    let drawWidth = size, drawHeight = size, x = 0, y = 0;
+    if (imgAspectRatio > 1) {
+        drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
+    } else {
+        drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
+    }
+    ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+    ctx.drawImage(frameImg, 0, 0, size, size);
+    
+    // <<< تغییر کلیدی در اینجا >>>
+    // به جای toBlob(resolve, 'image/png')، از image/jpeg با کیفیت 90% استفاده می‌کنیم
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); 
+}
 
         
 // این تابع را نیز در کد HTML خود جایگزین کنید
