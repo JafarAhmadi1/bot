@@ -8,96 +8,26 @@
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background-color: #f0f2f5; 
-            color: #1c1e21; 
-            margin: 0; 
-            padding: 20px; 
-            text-align: center; 
-        }
-        .container { 
-            max-width: 600px; 
-            margin: 2em auto; 
-            background-color: #fff; 
-            padding: 2em; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-        }
-        h1 { 
-            font-size: 24px; 
-            margin-bottom: 10px; 
-            color: #0077cc; 
-        }
-        p { 
-            font-size: 16px; 
-            color: #606770; 
-            line-height: 1.6;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 2em auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #0077cc; }
+        p { font-size: 16px; color: #606770; line-height: 1.6; }
         
-        .action-button { 
-            display: inline-block; 
-            padding: 12px 25px; 
-            margin: 5px; 
-            border: none; 
-            border-radius: 8px; 
-            background-color: #28a745; /* رنگ سبز برای دانلود */
-            color: #ffffff; 
-            font-size: 16px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: background-color 0.2s, opacity 0.2s; 
-            text-decoration: none; 
-        }
-        .action-button:hover:not(:disabled) { 
-            background-color: #218838; 
-        }
+        .action-button { display: inline-block; padding: 12px 25px; margin: 5px; border: none; border-radius: 8px; background-color: #0077cc; color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; text-decoration: none; }
+        .action-button:hover { background-color: #005fa3; }
         
-        /* دکمه آپلود و سایر دکمه‌ها را به رنگ اصلی برمی‌گردانیم */
-        #upload-label, .secondary-button {
-             background-color: #0077cc;
-        }
-        #upload-label:hover, .secondary-button:hover {
-             background-color: #005fa3;
-        }
-        #cancel-preview-btn {
-            background-color: #6c757d;
-        }
-        #cancel-preview-btn:hover {
-            background-color: #5a6268;
-        }
+        .save-button { background-color: #28a745; } /* دکمه سبز برای ذخیره */
+        .save-button:hover { background-color: #218838; }
 
+        .secondary-button { background-color: #6c757d; }
+        .secondary-button:hover { background-color: #5a6268; }
 
-        input[type="file"] { 
-            display: none; 
-        }
-        
-        #frame-selection { 
-            margin-top: 20px; 
-            padding-top: 20px; 
-            border-top: 1px solid #eee; 
-        }
-
-        #output { 
-            margin-top: 1.5em; 
-            padding: 1em; 
-            background-color: #f7f7f7; 
-            border-radius: 8px; 
-            min-height: 50px; 
-        }
+        input[type="file"] { display: none; }
+        #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        #output { margin-top: 1.5em; padding: 1em; background-color: #f7f7f7; border-radius: 8px; min-height: 50px; }
         .error { color: #d32f2f; font-weight: bold; }
-        
-        #preview-container img { 
-            max-width: 80%; 
-            height: auto; 
-            border-radius: 8px; 
-            border: 2px solid #ddd; 
-            margin-bottom: 1em; 
-        }
-
-        canvas { 
-            display: none;
-        }
+        #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
@@ -105,9 +35,8 @@
     <div class="container">
         <h1>🇮🇷 پویش پرچم بالا</h1>
         
-        <!-- بخش انتخاب فایل و قاب -->
         <div id="selection-area">
-            <p>سلام به پویش پرچم بالا خوش آمدید. برای تزئین تصویر پروفایل خود با پرچم سه رنگ کشورمان، لطفا تصویر خود را انتخاب کنید.</p>
+            <p>سلام! برای تزئین تصویر پروفایل خود با پرچم ایران، لطفا تصویر خود را انتخاب کنید.</p>
             <div>
                 <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
                 <input type="file" id="fileInput" accept="image/*">
@@ -119,25 +48,22 @@
         
         <canvas id="imageCanvas"></canvas>
 
-        <!-- بخش پیش‌نمایش و دانلود -->
         <div id="preview-container" style="display: none;">
             <h3>پیش‌نمایش تصویر نهایی</h3>
             <img id="preview-image" alt="پیش‌نمایش تصویر با قاب">
-            <p>عالی شد! حالا می‌توانید تصویر نهایی را ذخیره کنید.</p>
+            <p>برای ذخیره، روی دکمه زیر کلیک کنید تا تصویر باز شود. سپس با نگه داشتن انگشت روی آن، تصویر را ذخیره کنید.</p>
             
-            <!-- <<<<<<< این کانتینر برای درج لینک دانلود استفاده خواهد شد >>>>>>> -->
-<!--             <div id="download-container"></div> -->
-             <p id="download-container" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
+            <!-- کانتینر برای لینک مشاهده و ذخیره -->
+            <div id="save-link-container"></div>
             
-            <button id="cancel-preview-btn" class="action-button" style="background-color: #6c757d;">🔄 انتخاب قاب دیگر</button>
+            <button id="cancel-preview-btn" class="action-button secondary-button">🔄 انتخاب قاب دیگر</button>
         </div>
 
-        <!-- بخش نمایش وضعیت -->
         <div id="output">
             <p>منتظر انتخاب شما...</p>
         </div>
 
-        <button id="restart-button" class="action-button" style="display: none; margin-top: 15px; background-color: #6c757d;">شروع مجدد</button>
+        <button id="restart-button" class="action-button secondary-button" style="display: none; margin-top: 15px;">شروع مجدد</button>
     </div>
 
     <script>
@@ -148,7 +74,6 @@
             frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
             frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
         };
-        const FINAL_FILENAME = "parcham-bala-profile.jpg";
 
         // --- دسترسی به عناصر ---
         const fileInput = document.getElementById('fileInput');
@@ -160,7 +85,7 @@
         const selectionArea = document.getElementById('selection-area');
         const previewContainer = document.getElementById('preview-container');
         const previewImage = document.getElementById('preview-image');
-        const downloadContainer = document.getElementById('download-container'); // کانتینر دانلود
+        const saveLinkContainer = document.getElementById('save-link-container');
         const cancelPreviewBtn = document.getElementById('cancel-preview-btn');
         
         // --- متغیرهای وضعیت ---
@@ -196,7 +121,7 @@
             Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
                 const button = document.createElement('button');
                 button.innerText = `🖼️ قاب ${index + 1}`;
-                button.className = 'action-button secondary-button';
+                button.className = 'action-button';
                 button.onclick = () => generatePreview(FRAME_IMAGE_URLS[key]);
                 frameSelectionDiv.appendChild(button);
             });
@@ -210,26 +135,26 @@
 
             try {
                 const finalImageBlob = await createFramedImage(userFile, frameUrl);
-                
-                if (currentPreviewUrl) {
-                    URL.revokeObjectURL(currentPreviewUrl);
-                }
+                if (currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
                 currentPreviewUrl = URL.createObjectURL(finalImageBlob);
-
                 previewImage.src = currentPreviewUrl;
                 
-                // <<<<<<< تغییر کلیدی: ایجاد لینک دانلود با innerHTML >>>>>>>
-                // downloadContainer.innerHTML = `<a href="${currentPreviewUrl}" download="${FINAL_FILENAME}" class="action-button">📥 دانلود تصویر </a>`;
-                document.getElementById("download-container").innerHTML = `<a href="${currentPreviewUrl}" target="_blank" ">دانلود تصویر نهایی</a>`;
+                // <<<<<<< تغییر کلیدی: ایجاد لینک برای مشاهده و ذخیره دستی >>>>>>>
+                // target="_blank" تصویر را در یک صفحه/تب جدید باز می‌کند.
+                // rel="noopener noreferrer" یک اقدام امنیتی برای لینک‌های target="_blank" است.
+                // const downloadUrl = `${currentPreviewUrl}?ik-attachment=true&f=jpg`;
+                saveLinkContainer.innerHTML = `<a href="${currentPreviewUrl}" target="_blank" rel="noopener noreferrer" class="action-button save-button">🖼️ مشاهده و ذخیره تصویر</a>`;
                 
                 outputDiv.style.display = 'none';
                 previewContainer.style.display = 'block';
                 restartButton.style.display = 'none';
 
+                // در ایتا، دکمه اصلی به کاربر می‌گوید که چه کار کند
                 if (isEitaaEnv) {
-                     EitaaApp.MainButton.setText("راهنمای ذخیره تصویر");
+                     EitaaApp.MainButton.setText("مشاهده و ذخیره تصویر");
+                     // با کلیک روی دکمه اصلی ایتا هم، همان صفحه تصویر باز می‌شود.
                      EitaaApp.MainButton.onClick(() => {
-                        EitaaApp.showAlert("برای ذخیره، روی دکمه سبز رنگ '📥 دانلود تصویر' در صفحه کلیک کنید.");
+                        EitaaApp.openLink(currentPreviewUrl, {try_instant_view: true});
                      });
                      EitaaApp.MainButton.show();
                 }
@@ -250,7 +175,7 @@
                 URL.revokeObjectURL(currentPreviewUrl);
                 currentPreviewUrl = null;
             }
-            downloadContainer.innerHTML = ''; // محتوای کانتینر دانلود را پاک می‌کنیم
+            saveLinkContainer.innerHTML = '';
 
             if(isEitaaEnv) EitaaApp.MainButton.hide();
         }
@@ -285,10 +210,8 @@
 
         function resetApp() {
             userFile = null;
-            if(currentPreviewUrl) {
-                URL.revokeObjectURL(currentPreviewUrl);
-                currentPreviewUrl = null;
-            }
+            if(currentPreviewUrl) URL.revokeObjectURL(currentPreviewUrl);
+            currentPreviewUrl = null;
             fileInput.value = '';
             selectionArea.style.display = 'block';
             uploadLabel.style.display = 'inline-block';
@@ -297,7 +220,7 @@
             previewContainer.style.display = 'none';
             outputDiv.style.display = 'block';
             outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
-            downloadContainer.innerHTML = ''; // پاک کردن لینک دانلود
+            saveLinkContainer.innerHTML = '';
             restartButton.style.display = 'none';
 
             if (isEitaaEnv) {
