@@ -194,6 +194,8 @@
                 // ما به لینک، اتریبیوت download را اضافه می‌کنیم تا مستقیما دانلود شود
                 finalLinkContainer.innerHTML = `<a href="${finalUrl}" class="action-button" download="profile-framed.png">📥 دانلود تصویر</a>`;
 
+                document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank" class="action-button">دانلود تصویر نهایی</a>`;
+
                 // مرحله ۴: اتصال لینک به دکمه اصلی ایتا
                 if (isEitaaEnv) {
                     EitaaApp.MainButton.setText("مشاهده و دانلود تصویر");
