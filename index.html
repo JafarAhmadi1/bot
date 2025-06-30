@@ -1,97 +1,224 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>آپلود عکس به ImageKit.io</title>
-  <style>
-    body { font-family: sans-serif; direction: rtl; text-align: right; padding: 2em; max-width: 600px; margin: auto; }
-    #output { margin-top: 1em; word-wrap: break-word; }
-    .error { color: red; font-weight: bold; }
-    .success { color: green; font-weight: bold; }
-    button { padding: 0.5em 1em; cursor: pointer; }
-    input[type="file"] { border: 1px solid #ccc; padding: 0.5em; }
-    a { color: #0077cc; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آپلود عکس با قاب به ImageKit.io</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 2em auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #0077cc; }
+        p { font-size: 16px; color: #606770; }
+        
+        .action-button { display: inline-block; padding: 12px 25px; margin-top: 15px; border: none; border-radius: 8px; background-color: #0077cc; color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; text-decoration: none; }
+        .action-button:hover:not(:disabled) { background-color: #005fa3; }
+        .action-button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
+
+        input[type="file"] { display: none; }
+        
+        #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        #frame-selection button { margin: 5px; }
+
+        #output { margin-top: 1.5em; padding: 1em; background-color: #f7f7f7; border-radius: 8px; word-wrap: break-word; min-height: 50px; }
+        .error { color: #d32f2f; font-weight: bold; }
+        .success { color: #388e3c; font-weight: bold; }
+        a { color: #0077cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        canvas { display: none; /* کانواس را از دید کاربر مخفی می‌کنیم */}
+    </style>
 </head>
 <body>
 
-  <h2>آپلود عکس به ImageKit.io از طریق GitHub و Cloudflare Worker</h2>
+    <div class="container">
+        <h1>🇮🇷 پویش پرچم بالا</h1>
+        <p>برای ساخت تصویر پروفایل خود، ابتدا عکس خود و سپس قاب مورد نظر را انتخاب کنید.</p>
 
-  <form id="uploadForm">
-    <input type="file" id="fileInput" accept="image/*" required>
-    <br><br>
-    <button type="submit">آپلود کن</button>
-  </form>
+        <!-- مرحله ۱: انتخاب تصویر -->
+        <div>
+            <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
 
-  <div id="output"></div>
+        <!-- مرحله ۲: انتخاب قاب (در ابتدا مخفی) -->
+        <div id="frame-selection" style="display: none;">
+            <p>۲. انتخاب قاب</p>
+            <!-- دکمه‌های قاب اینجا به صورت داینامیک اضافه می‌شوند -->
+        </div>
+        
+        <!-- کانواس برای ترکیب تصاویر (مخفی) -->
+        <canvas id="imageCanvas"></canvas>
 
-  <script>
-    // --- این مقادیر باید با اطلاعات حساب شما پر شده باشند ---
+        <!-- مرحله ۳: نمایش وضعیت و نتیجه -->
+        <div id="output">
+            <p>منتظر انتخاب شما...</p>
+        </div>
+
+        <!-- دکمه شروع مجدد (در ابتدا مخفی) -->
+        <button id="restart-button" class="action-button" style="display: none; background-color: #606770;">شروع مجدد</button>
+
+    </div>
+
+    <script>
+    // --- مقادیر حساب شما ---
     const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
     const imagekitPublicKey = "public_93KUnZJ92ve8aZ91xGGC7/AXbvo=";
-    const imagekitUrlEndpoint = "https://ik.imagekit.io/kmrxk5bhgx"; // این متغیر در این نسخه استفاده نمی‌شود اما نگه داشتن آن ضرری ندارد
 
-    document.getElementById("uploadForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const outputDiv = document.getElementById("output");
-      const fileInput = document.getElementById("fileInput");
+    // --- آدرس قاب‌های شما ---
+    const FRAME_IMAGE_URLS = {
+        frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
+        frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
+        frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png"
+    };
 
-      if (fileInput.files.length === 0) {
-        outputDiv.innerHTML = `<p class="error">لطفاً یک تصویر انتخاب کنید.</p>`;
-        return;
-      }
-      
-      const file = fileInput.files[0];
-      
-      // <<< --- بلوک IF اشتباه از اینجا حذف شد --- >>>
+    // --- دسترسی به عناصر صفحه ---
+    const fileInput = document.getElementById('fileInput');
+    const uploadLabel = document.getElementById('upload-label');
+    const frameSelectionDiv = document.getElementById('frame-selection');
+    const outputDiv = document.getElementById('output');
+    const canvas = document.getElementById('imageCanvas');
+    const restartButton = document.getElementById('restart-button');
+    
+    let userFile = null;
 
-      outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
+    // --- رویدادها ---
+    fileInput.addEventListener('change', handleFileSelect);
+    restartButton.addEventListener('click', resetApp);
 
-      try {
-        // ۱. دریافت توکن، زمان انقضا و امضای دیجیتال از ورکر
+    function handleFileSelect(event) {
+        if (event.target.files.length === 0) return;
+        userFile = event.target.files[0];
+        
+        uploadLabel.style.display = 'none'; // مخفی کردن دکمه انتخاب فایل
+        outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`;
+        showFrameSelection();
+    }
+
+    function showFrameSelection() {
+        frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>'; // پاک کردن محتوای قبلی
+        Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
+            const button = document.createElement('button');
+            button.innerText = `🖼️ قاب ${index + 1}`;
+            button.className = 'action-button';
+            button.onclick = () => processAndUpload(FRAME_IMAGE_URLS[key]);
+            frameSelectionDiv.appendChild(button);
+        });
+        frameSelectionDiv.style.display = 'block';
+    }
+
+    async function processAndUpload(frameUrl) {
+        // غیرفعال کردن دکمه‌ها برای جلوگیری از کلیک مجدد
+        frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        outputDiv.innerHTML = "⏳ در حال آماده‌سازی تصویر شما...";
+
+        try {
+            // ۱. ترکیب تصویر کاربر و قاب روی کانواس
+            const imageBlob = await createFramedImage(userFile, frameUrl);
+
+            // ۲. آپلود تصویر نهایی (Blob) به ImageKit
+            await uploadBlobToImageKit(imageBlob);
+
+        } catch (error) {
+            console.error("خطا در فرآیند کلی:", error);
+            outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
+            restartButton.style.display = 'block'; // نمایش دکمه شروع مجدد در صورت خطا
+        }
+    }
+
+    // این تابع یک فایل عکس و آدرس قاب را می‌گیرد و یک Blob از نتیجه برمی‌گرداند
+    async function createFramedImage(userImageFile, frameImageUrl) {
+        const ctx = canvas.getContext('2d');
+        const loadImage = (src) => new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous"; // برای جلوگیری از خطای امنیتی کانواس
+            img.onload = () => resolve(img);
+            img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر قاب. از اتصال اینترنت مطمئن شوید."));
+            img.src = src;
+        });
+
+        const userImageUrl = URL.createObjectURL(userImageFile);
+
+        const [userImg, frameImg] = await Promise.all([
+            loadImage(userImageUrl),
+            loadImage(frameImageUrl)
+        ]);
+
+        URL.revokeObjectURL(userImageUrl); // آزاد کردن حافظه
+
+        const size = 512; // اندازه نهایی تصویر مربعی
+        canvas.width = size;
+        canvas.height = size;
+
+        // منطق برش تصویر کاربر از مرکز برای جا شدن در کادر مربعی
+        const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
+        let drawWidth = size, drawHeight = size, x = 0, y = 0;
+
+        if (imgAspectRatio > 1) { // تصویر عریض است
+            drawHeight = size;
+            drawWidth = drawHeight * imgAspectRatio;
+            x = (size - drawWidth) / 2;
+        } else { // تصویر بلند است
+            drawWidth = size;
+            drawHeight = drawWidth / imgAspectRatio;
+            y = (size - drawHeight) / 2;
+        }
+        
+        ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+        ctx.drawImage(frameImg, 0, 0, size, size); // کشیدن قاب روی تصویر
+
+        // تبدیل محتوای کانواس به Blob (فرمت بهینه برای آپلود)
+        return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+
+    // این تابع Blob نهایی را به ImageKit آپلود می‌کند
+    async function uploadBlobToImageKit(imageBlob) {
+        outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
+
+        // ۱. دریافت توکن از ورکر
         const authResponse = await fetch(workerUrl);
-        if (!authResponse.ok) {
-          throw new Error("ارتباط با ورکر برای دریافت توکن امنیتی ناموفق بود.");
-        }
+        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت توکن امنیتی ناموفق بود.");
         const authData = await authResponse.json();
+        if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
+        
+        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر نهایی...";
 
-        // بررسی می‌کنیم که آیا ورکر خطایی برگردانده است یا خیر
-        if (authData.error) {
-           throw new Error(`خطا از ورکر: ${authData.error}`);
-        }
-
-        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر...";
-
-        // ۲. ساخت فرم دیتا و ارسال مستقیم به ImageKit.io
+        // ۲. ساخت فرم دیتا و ارسال به ImageKit.io
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", imageBlob, "profile-framed.png"); // ارسال Blob با یک نام فایل پیش‌فرض
         formData.append("publicKey", imagekitPublicKey);
         formData.append("signature", authData.signature);
         formData.append("expire", authData.expire);
         formData.append("token", authData.token);
-        formData.append("fileName", file.name); // نام فایل اصلی را حفظ می‌کنیم
+        formData.append("fileName", "profile-framed.png");
 
         const uploadResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-          method: "POST",
-          body: formData
+            method: "POST",
+            body: formData
         });
         
         const result = await uploadResponse.json();
 
         if (uploadResponse.ok) {
-          const publicLink = result.url;
-          outputDiv.innerHTML = `<p class="success">✅ لینک تصویر شما:</p><a href="${publicLink}" target="_blank">${publicLink}</a>`;
+            const publicLink = result.url;
+            outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آپلود شد!</p><p>لینک دانلود:</p><a href="${publicLink}" target="_blank">${publicLink}</a>`;
+            frameSelectionDiv.style.display = 'none'; // مخفی کردن انتخاب قاب
+            restartButton.style.display = 'block'; // نمایش دکمه شروع مجدد
         } else {
-          // اگر خود ImageKit خطا داد، پیامش را نمایش می‌دهیم
-          throw new Error(`خطا از ImageKit.io: ${result.message}`);
+            throw new Error(`خطا از ImageKit.io: ${result.message}`);
         }
+    }
 
-      } catch (error) {
-        console.error("خطای کامل:", error);
-        outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
-      }
-    });
-  </script>
+    function resetApp() {
+        userFile = null;
+        fileInput.value = ''; // ریست کردن مقدار فایل ورودی
+        uploadLabel.style.display = 'inline-block';
+        frameSelectionDiv.style.display = 'none';
+        frameSelectionDiv.innerHTML = '';
+        outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
+        restartButton.style.display = 'none';
+    }
 
+    </script>
 </body>
 </html>
