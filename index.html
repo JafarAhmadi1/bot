@@ -202,50 +202,70 @@
             return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         }
 
-        async function uploadBlobToImageKit(imageBlob) {
-            outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
-            // ... (بخش آپلود بدون تغییر) ...
-            try {
-                const authResponse = await fetch(workerUrl);
-                if (!authResponse.ok) throw new Error("ارتباط با ورکر ناموفق بود.");
-                const authData = await authResponse.json();
-                if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
-                
-                outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر نهایی...";
-                const formData = new FormData();
-                formData.append("file", imageBlob, "profile-framed.png");
-                formData.append("publicKey", imagekitPublicKey);
-                formData.append("signature", authData.signature);
-                formData.append("expire", authData.expire);
-                formData.append("token", authData.token);
-                formData.append("fileName", "profile-framed.png");
+        // این تابع را در کد HTML خود جایگزین کنید
 
-                const uploadResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-                    method: "POST", body: formData
-                });
-                const result = await uploadResponse.json();
+async function uploadBlobToImageKit(imageBlob) {
+    outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
+    try {
+        const authResponse = await fetch(workerUrl);
+        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت توکن ناموفق بود.");
+        const authData = await authResponse.json();
+        if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
+        
+        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر نهایی...";
+        const formData = new FormData();
+        formData.append("file", imageBlob, "profile-framed.png");
+        formData.append("publicKey", imagekitPublicKey);
+        formData.append("signature", authData.signature);
+        formData.append("expire", authData.expire);
+        formData.append("token", authData.token);
+        formData.append("fileName", "profile-framed.png");
+        formData.append("useUniqueFileName", "false"); // برای اینکه نام فایل ما را نگه دارد
+        formData.append("folder", "/parcham-bala/"); // اختیاری: برای نظم‌دهی در ایمیج‌کیت
 
-                if (uploadResponse.ok) {
-                    const finalUrl = result.url;
-                    outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آپلود شد.</p>`;
-                    // finalLinkContainer.innerHTML = `<a href="${finalUrl}" class="action-button" download="profile-framed.png">📥 دانلود تصویر</a>`;
+        const uploadResponse = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+            method: "POST", body: formData
+        });
+        const result = await uploadResponse.json();
 
-                    document.getElementById("final-link").innerHTML = `<a href="${finalUrl}" target="_blank" class="action-button">دانلود تصویر نهایی</a>`;
+        if (uploadResponse.ok) {
+            outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آماده شد.</p>`;
+            
+            // --- شروع تغییرات کلیدی ---
 
-                    if (isEitaaEnv) {
-                        EitaaApp.MainButton.setText("مشاهده و دانلود تصویر");
-                        EitaaApp.MainButton.onClick(() => EitaaApp.openLink(finalUrl));
-                        EitaaApp.MainButton.show();
-                    }
-                    restartButton.style.display = 'inline-block';
-                } else {
-                    throw new Error(`خطا از ImageKit.io: ${result.message}`);
-                }
-            } catch (error) {
-                 outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
-                 restartButton.style.display = 'block';
+            // ۱. URL اصلی برای مشاهده آنلاین
+            const viewUrl = result.url; 
+            
+            // ۲. ساخت URL مخصوص دانلود با افزودن پارامتر
+            const downloadUrl = viewUrl + '?ik-attachment=true';
+
+            // ۳. پاک کردن کدهای اضافی و ایجاد دکمه‌های واضح
+            // به جای سه خط جداگانه، همه را در یک بخش مدیریت می‌کنیم
+            finalLinkContainer.innerHTML = `
+                <a href="${downloadUrl}" class="action-button" download="profile-framed.png">📥 دانلود مستقیم</a>
+                <a href="${viewUrl}" target="_blank" class="action-button secondary-button">👁️ مشاهده آنلاین</a>
+            `;
+
+            // ۴. اصلاح عملکرد دکمه اصلی ایتا
+            if (isEitaaEnv) {
+                EitaaApp.MainButton.setText("دانلود تصویر");
+                // حالا با کلیک روی این دکمه، مرورگر ایتا فایل را دانلود می‌کند
+                EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
+                EitaaApp.MainButton.show();
             }
+
+            // --- پایان تغییرات ---
+
+            restartButton.style.display = 'inline-block';
+
+        } else {
+            throw new Error(`خطا در آپلود در ImageKit.io: ${result.message}`);
         }
+    } catch (error) {
+         outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
+         restartButton.style.display = 'block';
+    }
+}
 
         function resetApp() {
             userFile = null;
