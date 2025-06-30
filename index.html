@@ -206,14 +206,14 @@
 
         
 async function uploadBlobToImageKit(imageBlob) {
-    outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
+    outputDiv.innerHTML = "در حال دریافت اطلاعات...";
     try {
         const authResponse = await fetch(workerUrl);
-        if (!authResponse.ok) throw new Error("ارتباط با ورکر برای دریافت توکن ناموفق بود.");
+        if (!authResponse.ok) throw new Error("ارتباط برای دریافت اطلاعات ناموفق بود.");
         const authData = await authResponse.json();
         if (authData.error) throw new Error(`خطا از ورکر: ${authData.error}`);
         
-        outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر نهایی...";
+        outputDiv.innerHTML = "اطلاعات دریافت شد. در حال آماده سازی تصویر نهایی...";
         const formData = new FormData();
         formData.append("file", imageBlob, "profile-framed.png");
         formData.append("publicKey", imagekitPublicKey);
@@ -230,7 +230,7 @@ async function uploadBlobToImageKit(imageBlob) {
         const result = await uploadResponse.json();
 
         if (uploadResponse.ok) {
-            outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آماده شد.</p>`;
+            outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آماده شد.\n حالا نوبت شماست تا میتونی برنامک رو به دوستات معرفی کنی...   </p>`;
             
             // --- شروع تغییرات کلیدی ---
 
