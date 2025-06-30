@@ -219,7 +219,8 @@
                 previewImage.src = currentPreviewUrl;
                 
                 // <<<<<<< تغییر کلیدی: ایجاد لینک دانلود با innerHTML >>>>>>>
-                downloadContainer.innerHTML = `<a href="${currentPreviewUrl}" download="${FINAL_FILENAME}" class="action-button">📥 دانلود تصویر </a>`;
+                // downloadContainer.innerHTML = `<a href="${currentPreviewUrl}" download="${FINAL_FILENAME}" class="action-button">📥 دانلود تصویر </a>`;
+                document.getElementById("download-container").innerHTML = `<a href="${currentPreviewUrl}" target="_blank" download="${FINAL_FILENAME}" class="action-button">دانلود تصویر نهایی</a>`;
                 
                 outputDiv.style.display = 'none';
                 previewContainer.style.display = 'block';
