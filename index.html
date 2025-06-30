@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <h2>آپلود عکس ها به ImageKit.io از طریق GitHub و Cloudflare Worker</h2>
+  <h2>آپلود عکس به ImageKit.io از طریق GitHub و Cloudflare Worker</h2>
 
   <form id="uploadForm">
     <input type="file" id="fileInput" accept="image/*" required>
@@ -26,10 +26,10 @@
   <div id="output"></div>
 
   <script>
-    // --- لطفاً این دو متغیر را با مقادیر خودتان پر کنید ---
-    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/"; // آدرس کامل ورکر خودتان را اینجا بگذارید
-    const imagekitPublicKey = "public_93KUnZJ92ve8aZ91xGGC7/AXbvo="; // کلید عمومی خودتان را اینجا بگذارید
-    const imagekitUrlEndpoint = "https://ik.imagekit.io/kmrxk5bhgx"; // آدرس URL-Endpoint خودتان را اینجا بگذارید
+    // --- این مقادیر باید با اطلاعات حساب شما پر شده باشند ---
+    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
+    const imagekitPublicKey = "public_93KUnZJ92ve8aZ91xGGC7/AXbvo=";
+    const imagekitUrlEndpoint = "https://ik.imagekit.io/kmrxk5bhgx"; // این متغیر در این نسخه استفاده نمی‌شود اما نگه داشتن آن ضرری ندارد
 
     document.getElementById("uploadForm").addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -42,13 +42,8 @@
       }
       
       const file = fileInput.files[0];
-
-      // بررسی مقادیر اولیه
-      if (workerUrl === "https://eite2bale.jafar-ahmadi658.workers.dev/" || imagekitPublicKey === "public_93KUnZJ92ve8aZ91xGGC7/AXbvo=" || imagekitUrlEndpoint === "https://ik.imagekit.io/kmrxk5bhgx") {
-          outputDiv.innerHTML = `<p class="error">لطفاً مقادیر لازم را در کد اسکریپت تنظیم کنید.</p>`;
-          return;
-      }
       
+      // <<< --- بلوک IF اشتباه از اینجا حذف شد --- >>>
 
       outputDiv.innerHTML = "در حال دریافت توکن امنیتی...";
 
@@ -59,6 +54,11 @@
           throw new Error("ارتباط با ورکر برای دریافت توکن امنیتی ناموفق بود.");
         }
         const authData = await authResponse.json();
+
+        // بررسی می‌کنیم که آیا ورکر خطایی برگردانده است یا خیر
+        if (authData.error) {
+           throw new Error(`خطا از ورکر: ${authData.error}`);
+        }
 
         outputDiv.innerHTML = "توکن دریافت شد. در حال آپلود تصویر...";
 
