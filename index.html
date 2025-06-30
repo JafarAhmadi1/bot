@@ -1,51 +1,96 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8">
-  <title>آپلود عکس با دریافت لینک</title>
-  <style>
-    body { font-family: sans-serif; direction: rtl; text-align: right; padding: 2em; }
-    #output { margin-top: 1em; color: green; }
-  </style>
-</head>
-<body>
+// تعریف هدرهای CORS برای استفاده مجدد
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*", // به همه دامنه‌ها اجازه دسترسی می‌دهد
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
-  <h2>ارسال عکس به PostImages از طریق Cloudflare Worker</h2>
+export default {
+  async fetch(request) {
+    // پاسخ به درخواست‌های OPTIONS برای بررسی CORS (preflight)
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
+    }
 
-  <form id="uploadForm">
-    <input type="file" id="fileInput" accept="image/*" required>
-    <br><br>
-    <button type="submit">آپلود کن</button>
-  </form>
+    if (request.method === "POST") {
+      const contentType = request.headers.get("content-type") || "";
 
-  <div id="output"></div>
-
-  <script>
-    document.getElementById("uploadForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-
-      const fileInput = document.getElementById("fileInput");
-      if (fileInput.files.length === 0) {
-        alert("لطفاً یک تصویر انتخاب کنید.");
-        return;
+      if (!contentType.includes("multipart/form-data")) {
+        return new Response(JSON.stringify({ error: "نوع محتوا باید multipart/form-data باشد" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append("file", file);
+      const formData = await request.formData();
+      const file = formData.get("file");
 
-      // ارسال فایل به Worker خودت. این آدرس باید آدرس واقعی Workerت باشه!
-      const response = await fetch("https://eite2bale.jafar-ahmadi658.workers.dev/", {
-        method: "POST",
-        body: formData
-      });
+      if (!file || typeof file === "string") {
+        return new Response(JSON.stringify({ error: "فایلی برای آپلود ارسال نشده است" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-      const result = await response.json();
-      const link = result?.url || result?.url_short || "لینک یافت نشد";
+      // ساخت یک فرم جدید برای ارسال به PostImages
+      const uploadForm = new FormData();
+      // نام فیلد در API داخلی PostImages 'upload[]' است
+      uploadForm.append("upload[]", file, file.name);
 
-      document.getElementById("output").innerHTML = `✅ لینک تصویر: <a href="${link}" target="_blank">${link}</a>`;
+      try {
+        // ارسال درخواست به PostImages با هدرهای مناسب
+        const postImagesResponse = await fetch("https://postimages.org/json/rr", {
+          method: "POST",
+          body: uploadForm,
+          headers: {
+            // این هدرها باعث می‌شوند درخواست شما شبیه به یک درخواست واقعی از مرورگر به نظر برسد
+            "Referer": "https://postimages.org/",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+          }
+        });
+
+        // ۱. بررسی می‌کنیم که آیا پاسخ موفقیت‌آمیز است یا نه (کدهای 2xx)
+        if (!postImagesResponse.ok) {
+          // اگر موفق نبود، متن خطا را می‌خوانیم تا بفهمیم مشکل چه بوده
+          const errorText = await postImagesResponse.text();
+          console.error("خطا از PostImages:", errorText); // برای دیباگ در داشبورد Cloudflare
+          return new Response(JSON.stringify({ error: `PostImages با خطا پاسخ داد: ${postImagesResponse.status}` }), {
+            status: 502, // Bad Gateway
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // ۲. حالا که مطمئنیم پاسخ موفقیت‌آمیز است، آن را به عنوان JSON پردازش می‌کنیم
+        const result = await postImagesResponse.json();
+        
+        // ۳. لینک را از پاسخ استخراج می‌کنیم
+        const link = result?.url || result?.url_short;
+
+        if (!link) {
+           return new Response(JSON.stringify({ error: "لینکی در پاسخ PostImages یافت نشد" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // ۴. پاسخ موفقیت‌آمیز را به همراه لینک به مرورگر کاربر ارسال می‌کنیم
+        return new Response(JSON.stringify({ url: link }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+
+      } catch (e) {
+        console.error("خطای داخلی در Worker:", e);
+        return new Response(JSON.stringify({ error: "یک خطای پیش‌بینی نشده در سرور رخ داد." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // پاسخ برای متدهای دیگر مثل GET
+    return new Response("این Worker فقط درخواست‌های POST برای آپلود تصویر را می‌پذیرد.", {
+      headers: corsHeaders,
     });
-  </script>
-
-</body>
-</html>
+  }
+};
