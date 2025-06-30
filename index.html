@@ -107,7 +107,7 @@
         
         <!-- بخش انتخاب فایل و قاب -->
         <div id="selection-area">
-            <p>سلام به پویش پرچم بالا خوش آمدید.حتما برای تزئین تصویر پروفایل خود با پرچم سه رنگ کشورمان، لطفا تصویر خود را انتخاب کنید.</p>
+            <p>سلام به پویش پرچم بالا خوش آمدید. برای تزئین تصویر پروفایل خود با پرچم سه رنگ کشورمان، لطفا تصویر خود را انتخاب کنید.</p>
             <div>
                 <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
                 <input type="file" id="fileInput" accept="image/*">
@@ -220,7 +220,7 @@
                 
                 // <<<<<<< تغییر کلیدی: ایجاد لینک دانلود با innerHTML >>>>>>>
                 // downloadContainer.innerHTML = `<a href="${currentPreviewUrl}" download="${FINAL_FILENAME}" class="action-button">📥 دانلود تصویر </a>`;
-                document.getElementById("download-container").innerHTML = `<a href="${currentPreviewUrl}" target="_blank" download="${FINAL_FILENAME}" class="action-button">دانلود تصویر نهایی</a>`;
+                document.getElementById("download-container").innerHTML = `<a href="${currentPreviewUrl}" target="_blank" ">دانلود تصویر نهایی</a>`;
                 
                 outputDiv.style.display = 'none';
                 previewContainer.style.display = 'block';
