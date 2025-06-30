@@ -38,12 +38,14 @@
       try {
         // ۱. ابتدا از ورکر خودمان یک لینک یکبار مصرف برای آپلود می‌گیریم
         const workerResponse = await fetch("https://eite2bale.jafar-ahmadi658.workers.dev/");
-        const { uploadURL } = await workerResponse.json();
+        const workerResult = await workerResponse.json();
 
-        if (!uploadURL) {
-          throw new Error("دریافت لینک آپلود از ورکر با خطا مواجه شد.");
+        if (!workerResponse.ok || !workerResult.uploadURL) {
+          const errorMessage = workerResult.errors?.[0]?.message || "پاسخ ورکر نامعتبر است.";
+          throw new Error(`دریافت لینک آپلود از ورکر با خطا مواجه شد: ${errorMessage}`);
         }
 
+        const uploadURL = workerResult.uploadURL;
         outputDiv.innerHTML = "در حال آپلود تصویر...";
 
         // ۲. حالا فایل را مستقیماً به لینک دریافتی از Cloudflare Images ارسال می‌کنیم
@@ -63,12 +65,15 @@
           const publicLink = result.result.variants[0]; 
           outputDiv.innerHTML = `<p class="success">✅ لینک تصویر: <a href="${publicLink}" target="_blank">${publicLink}</a></p>`;
         } else {
-          throw new Error("آپلود تصویر با خطا مواجه شد.");
+          // --- این بخش مهم و جدید است ---
+          // اگر آپلود ناموفق بود، پیام خطای دقیق را از خود کلادفلر نمایش بده
+          const cloudflareError = result.errors[0]?.message || "خطای ناشناخته از سرور آپلود.";
+          throw new Error(`آپلود تصویر با خطا مواجه شد: ${cloudflareError}`);
         }
 
       } catch (error) {
-        console.error("خطا:", error);
-        outputDiv.innerHTML = `<p class="error">یک خطای غیرمنتظره 3رخ داد: ${error.message}</p>`;
+        console.error("خطای کامل:", error);
+        outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
       }
     });
   </script>
