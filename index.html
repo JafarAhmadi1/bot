@@ -216,7 +216,7 @@ async function createFramedImage(userImageFile, frameImageUrl) {
         
         // این تابع جدید را جایگزین تابع uploadBlobToImageKit کنید
 async function uploadBlobToBaleViaWorker(imageBlob) {
-    outputDiv.innerHTML = "در حال ارسال تصویر به سرور...";
+    outputDiv.innerHTML = "در حال ارسال تصویر  ...";
 
     try {
         const timestamp = Date.now(); // برای جلوگیری از کش (Cache Busting)
@@ -236,7 +236,7 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
 
         if (!response.ok) {
             // اگر ورکر خطا برگرداند (مثلا status 500)
-            throw new Error(result.details || "خطا در ارتباط با سرور ورکر.");
+            throw new Error(result.details || "خطا در ارتباط با  .");
         }
         
         if (result.error) {
