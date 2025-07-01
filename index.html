@@ -302,7 +302,7 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
         `;
 
         if (isEitaaEnv) {
-            EitaaApp.MainButton.setText("دانلود تصویر از بله");
+            EitaaApp.MainButton.setText("دانلود تصویر ");
             EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
             EitaaApp.MainButton.show();
         }
