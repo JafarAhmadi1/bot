@@ -214,33 +214,33 @@ async function createFramedImage(userImageFile, frameImageUrl) {
 }
 
         
-        // این تابع جدید را جایگزین تابع uploadBlobToImageKit کنید
 async function uploadBlobToBaleViaWorker(imageBlob) {
-    outputDiv.innerHTML = "در حال ارسال تصویر  ...";
+    outputDiv.innerHTML = "در حال ارسال تصویر...";
 
     try {
-        const timestamp = Date.now(); // برای جلوگیری از کش (Cache Busting)
+        // --- شروع تغییرات ---
+        // 1. ساخت یک URL منحصربه‌فرد برای جلوگیری از کش شدن درخواست
+        const uniqueWorkerUrl = `${workerUrl}?v=${Date.now()}`;
+        // --- پایان تغییرات ---
+
+        const timestamp = Date.now();
         const fileName = `Parcham-Bala-${timestamp}.jpg`;
         const formData = new FormData();
-        // نام 'file' باید با چیزی که ورکر انتظار دارد یکی باشد (formData.get("file"))
         formData.append("file", imageBlob, fileName);
 
-        // ارسال فایل به ورکر خودمان با متد POST
-        const response = await fetch(workerUrl, {
+        // 2. استفاده از URL منحصربه‌فرد در درخواست fetch
+        const response = await fetch(uniqueWorkerUrl, {
             method: "POST",
             body: formData
         });
 
         const result = await response.json();
 
-
         if (!response.ok) {
-            // اگر ورکر خطا برگرداند (مثلا status 500)
-            throw new Error(result.details || "خطا در ارتباط با  .");
+            throw new Error(result.details || "خطا در ارتباط با سرور.");
         }
         
         if (result.error) {
-            // اگر ورکر یک خطای منطقی را در پاسخ JSON برگرداند
             throw new Error(result.error);
         }
 
@@ -248,13 +248,13 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
         
         const downloadUrl = result.url;
 
-
-        finalLinkContainer.innerHTML = `
-            <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم تصویر </a>
-        `;
-
+        // finalLinkContainer.innerHTML = `
+        //     <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم تصویر</a>
+        // `;
+        document.getElementById("final-link").innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
+        
         if (isEitaaEnv) {
-            EitaaApp.MainButton.setText("دانلود تصویر ");
+            EitaaApp.MainButton.setText("دانلود تصویر");
             EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
             EitaaApp.MainButton.show();
         }
