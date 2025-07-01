@@ -291,14 +291,14 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
             throw new Error(result.error);
         }
 
-        outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت در «بله» بارگذاری شد.</p>`;
+        outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت بارگذاری شد.</p>`;
         
         const downloadUrl = result.url;
         const timestamp = Date.now(); // برای جلوگیری از کش (Cache Busting)
         const fileName = `Parcham-Bala-${timestamp}.jpg`;
 
         finalLinkContainer.innerHTML = `
-            <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم از بله</a>
+            <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم تصویر </a>
         `;
 
         if (isEitaaEnv) {
