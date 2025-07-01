@@ -214,45 +214,44 @@ async function createFramedImage(userImageFile, frameImageUrl) {
 }
 
         
-// این تابع جدید را جایگزین تابع uploadBlobToImageKit کنید
+// این تابع را در کد HTML خود جایگزین کنید
 async function uploadBlobToBaleViaWorker(imageBlob) {
     outputDiv.innerHTML = "در حال ارسال تصویر به سرور...";
 
     try {
         const formData = new FormData();
-        // نام 'file' باید با چیزی که ورکر انتظار دارد یکی باشد (formData.get("file"))
         formData.append("file", imageBlob, "parcham-bala-profile.jpg");
 
-        // ارسال فایل به ورکر خودمان با متد POST
-        const response = await fetch(workerUrl, {
+        const uploadResponse = await fetch(workerUrl, {
             method: "POST",
             body: formData
         });
 
-        const result = await response.json();
+        const result = await uploadResponse.json();
 
-        if (!response.ok) {
-            // اگر ورکر خطا برگرداند (مثلا status 500)
-            throw new Error(result.details || "خطا در ارتباط با سرور ورکر.");
+        if (!uploadResponse.ok || result.error) {
+            throw new Error(result.details || result.error || "خطا در آپلود فایل.");
         }
         
-        if (result.error) {
-            // اگر ورکر یک خطای منطقی را در پاسخ JSON برگرداند
-            throw new Error(result.error);
-        }
-
-        outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت در «بله» بارگذاری شد.</p>`;
+        outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت آماده شد.</p>`;
         
-        const downloadUrl = result.url;
-        const fileName = "Parcham-Bala-Profile.jpg";
+        const baleUrl = result.url; // این لینک مستقیم به فایل در بله است
+        const timestamp = Date.now(); // برای جلوگیری از کش (Cache Busting)
+        const fileName = `Parcham-Bala-${timestamp}.jpg`;
+        
+        // **راه حل کلیدی:**
+        // لینک دانلود را به ورکر خودمان می‌دهیم تا پراکسی شود
+        // و یک پارامتر cache-busting هم به آن اضافه می‌کنیم
+        const finalDownloadLink = `${workerUrl}/download?url=${encodeURIComponent(baleUrl)}&v=${timestamp}`;
 
         finalLinkContainer.innerHTML = `
-            <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم از بله</a>
+            <a href="${finalDownloadLink}" class="action-button" download="${fileName}">📥 دانلود مستقیم</a>
         `;
 
         if (isEitaaEnv) {
-            EitaaApp.MainButton.setText("دانلود تصویر از بله");
-            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
+            EitaaApp.MainButton.setText("دانلود تصویر نهایی");
+            // دکمه ایتا هم از همین لینک منحصر به فرد استفاده می‌کند
+            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(finalDownloadLink));
             EitaaApp.MainButton.show();
         }
 
