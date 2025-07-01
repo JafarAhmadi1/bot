@@ -77,12 +77,15 @@
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
     const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
-    const FRAME_IMAGE_URLS = {
-        frame1: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png",
-        frame2: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png",
-        frame3: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png",
-        frame4: "https://i.postimg.cc/HnzshzbR/Parcham-Bala-M3.png"
-    };
+    // --- مقادیر ثابت ---
+const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
+// ما از یک ساختار داده بهتر برای نگهداری اطلاعات قاب‌ها استفاده می‌کنیم
+const FRAMES_DATA = [
+    { label: "🖼️ قاب ۱", url: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png" },
+    { label: "🖼️ قاب ۲", url: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png" },
+    { label: "🖼️ قاب ۳", url: "https://i.postimg.cc/bN4wwSGb/Parcham-Frame-3.png" },
+    { label: "🏴 قاب محرم", url: "https://i.postimg.cc/HnzshzbR/Parcham-Bala-M3.png" }
+];
 
     // --- دسترسی به عناصر ---
     const fileInput = document.getElementById('fileInput');
@@ -129,16 +132,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showFrameSelection() {
-        frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>';
-        Object.keys(FRAME_IMAGE_URLS).forEach((key, index) => {
-            const button = document.createElement('button');
-            button.innerText = `🖼️ قاب ${index + 1}`;
-            button.className = 'action-button';
-            button.onclick = () => generatePreview(FRAME_IMAGE_URLS[key]);
-            frameSelectionDiv.appendChild(button);
-        });
-        frameSelectionDiv.style.display = 'block';
-    }
+    frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>';
+    // حالا بر روی آرایه جدیدی که ساختیم حلقه می‌زنیم
+    FRAMES_DATA.forEach(frame => {
+        const button = document.createElement('button');
+        button.innerText = frame.label; // از برچسب تعریف شده استفاده می‌کنیم
+        button.className = 'action-button';
+        button.onclick = () => generatePreview(frame.url); // از آدرس تعریف شده استفاده می‌کنیم
+        frameSelectionDiv.appendChild(button);
+    });
+    frameSelectionDiv.style.display = 'block';
+}
 
     async function generatePreview(frameUrl) {
         selectionArea.style.display = 'none';
