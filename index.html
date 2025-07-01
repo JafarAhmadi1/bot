@@ -219,17 +219,12 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
     outputDiv.innerHTML = "در حال ارسال تصویر...";
 
     try {
-        // --- شروع تغییرات ---
-        // 1. ساخت یک URL منحصربه‌فرد برای جلوگیری از کش شدن درخواست
         const uniqueWorkerUrl = `${workerUrl}?v=${Date.now()}`;
-        // --- پایان تغییرات ---
-
         const timestamp = Date.now();
         const fileName = `Parcham-Bala-${timestamp}.jpg`;
         const formData = new FormData();
         formData.append("file", imageBlob, fileName);
 
-        // 2. استفاده از URL منحصربه‌فرد در درخواست fetch
         const response = await fetch(uniqueWorkerUrl, {
             method: "POST",
             body: formData
@@ -249,15 +244,17 @@ async function uploadBlobToBaleViaWorker(imageBlob) {
         
         const downloadUrl = result.url;
 
-        // finalLinkContainer.innerHTML = `
-        //     <a href="${downloadUrl}" class="action-button" download="${fileName}">📥 دانلود مستقیم تصویر</a>
-        // `;
         document.getElementById("final-link").innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
         
         if (isEitaaEnv) {
+            // --- شروع تغییر کلیدی ---
+            // یک URL منحصربه‌فرد برای دکمه ایتا بسازید تا کش نشود
+            const uniqueDownloadUrlForEitaa = `${downloadUrl}?v=${Date.now()}`;
+            
             EitaaApp.MainButton.setText("دانلود تصویر");
-            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl));
+            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(uniqueDownloadUrlForEitaa));
             EitaaApp.MainButton.show();
+            // --- پایان تغییر کلیدی ---
         }
 
         restartButton.style.display = 'inline-block';
