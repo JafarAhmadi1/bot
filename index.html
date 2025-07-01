@@ -1,4 +1,79 @@
-<script>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پویش پرچم بالا</title>
+    
+    <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 2em auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #0077cc; }
+        p { font-size: 16px; color: #606770; }
+        
+        .action-button { display: inline-block; padding: 12px 25px; margin: 5px; border: none; border-radius: 8px; background-color: #0077cc; color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; text-decoration: none; }
+        .action-button:hover:not(:disabled) { background-color: #005fa3; }
+        .action-button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
+        .secondary-button { background-color: #6c757d; }
+        .secondary-button:hover:not(:disabled) { background-color: #5a6268; }
+
+        input[type="file"] { display: none; }
+        
+        #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+
+        #output { margin-top: 1.5em; padding: 1em; background-color: #f7f7f7; border-radius: 8px; word-wrap: break-word; min-height: 50px; }
+        .error { color: #d32f2f; font-weight: bold; }
+        .success { color: #388e3c; font-weight: bold; }
+        
+        #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
+
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🇮🇷 پویش پرچم بالا</h1>
+        
+        <!-- بخش انتخاب فایل و قاب -->
+        <div id="selection-area">
+            <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+
+            <div>
+                <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            <div id="frame-selection" style="display: none;">
+                <p>۲. انتخاب قاب</p>
+            </div>
+        </div>
+        
+        <canvas id="imageCanvas"></canvas>
+
+        <!-- بخش پیش‌نمایش و تایید -->
+        <div id="preview-container" style="display: none;">
+            <h3>پیش‌نمایش تصویر نهایی</h3>
+            <img id="preview-image" alt="پیش‌نمایش تصویر با قاب">
+            <p>آیا از نتیجه راضی هستید؟</p>
+            <div id="preview-actions">
+                <button id="cancel-preview-btn" class="action-button secondary-button">🔄 انتخاب قاب دیگر</button>
+                <button id="confirm-upload-btn" class="action-button">✅ بله، دانلودش کن</button>
+            </div>
+        </div>
+
+        <!-- بخش نمایش وضعیت و لینک نهایی -->
+        <div id="output">
+            <p>منتظر انتخاب شما...</p>
+        </div>
+<!--         <div id="final-link"></div> -->
+        <p id="final-link" style="margin-top: 10px; word-break: break-all; font-size: 13px; color: #555;"></p>
+
+        <button id="restart-button" class="action-button secondary-button" style="display: none;">شروع مجدد</button>
+    </div>
+
+   <script>
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
     const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
@@ -231,3 +306,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+</body>
+</html>
+
+
+
+
+
