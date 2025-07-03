@@ -7,7 +7,6 @@
     
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
-    
     <style>
         :root {
             --bg-color: var(--tg-theme-bg-color, #ffffff);
@@ -79,10 +78,9 @@
 
         <div id="result-container" style="display: none;">
             <h3>تصویر شما آماده شد!</h3>
-            <canvas id="image-canvas"></canvas>
             <img id="result-image" alt="تصویر نهایی با قاب">
-            <!-- تغییر: این div برای نگهداری لینک دانلود جدید استفاده می‌شود -->
-            <div id="finalLinkContainer" style="margin-top: 15px;"></div>
+            <!-- کانتینر برای دکمه باز کردن در مرورگر -->
+            <div id="open-in-browser-container" style="margin-top: 15px;"></div>
         </div>
     </div>
 
@@ -111,7 +109,7 @@
             const statusDiv = document.getElementById('status');
             const resultContainer = document.getElementById('result-container');
             const resultImage = document.getElementById('result-image');
-            const finalLinkContainer = document.getElementById('finalLinkContainer');
+            const openInBrowserContainer = document.getElementById('open-in-browser-container');
             
             let userImageObjectUrl = null;
 
@@ -148,38 +146,41 @@
                 ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
                 ctx.drawImage(frameImg, 0, 0, size, size);
 
-                return new Promise((resolve, reject) => {
-                    canvas.toBlob(blob => {
-                        blob ? resolve(blob) : reject(new Error("خطا در ساخت فایل نهایی تصویر."));
-                    }, 'image/png');
-                });
+                return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
             }
 
             function displayResult(imageBlob) {
+                // ایجاد URL موقت برای تصویر
+                const imageUrl = URL.createObjectURL(imageBlob);
+
+                // نمایش پیش‌نمایش در داخل برنامه
                 if (resultImage.src) URL.revokeObjectURL(resultImage.src);
-                resultImage.src = URL.createObjectURL(imageBlob);
+                resultImage.src = imageUrl;
 
-                // **تغییر اصلی اینجا اتفاق می‌افتد**
-                // ایجاد لینک دانلود در کانتینر مخصوص
-                const downloadUrl = URL.createObjectURL(imageBlob);
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const fileName = `parcham-bala-${timestamp}.png`;
-                
-                finalLinkContainer.innerHTML = `<a id="final-download-link" href="${downloadUrl}" download="${fileName}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
+                // ایجاد دکمه "باز کردن در مرورگر"
+                openInBrowserContainer.innerHTML = ''; // پاک کردن دکمه قبلی
+                const openLink = document.createElement('a');
+                openLink.id = 'open-link';
+                openLink.href = imageUrl;
+                openLink.target = '_blank'; // مهم برای باز شدن در تب جدید
+                openLink.className = 'action-button';
+                openLink.innerText = '🖼️ باز کردن در مرورگر برای ذخیره';
+                openInBrowserContainer.appendChild(openLink);
 
+                // نمایش بخش نتیجه
                 statusDiv.style.display = 'none';
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'block';
 
+                // تنظیم دکمه‌های نیتیو ایتا
                 if (isEitaaEnv) {
-                    // دکمه اصلی ایتا روی لینک دانلود جدید کلیک می‌کند
-                    EitaaApp.MainButton.setText("✅ دانلود تصویر");
+                    EitaaApp.MainButton.setText("✅ باز کردن برای ذخیره");
                     EitaaApp.MainButton.onClick(() => {
-                        document.getElementById('final-download-link').click();
+                        // با کلیک روی دکمه اصلی ایتا، لینک بالا را به صورت برنامه‌نویسی کلیک می‌کنیم
+                        document.getElementById('open-link').click();
                     });
                     EitaaApp.MainButton.show();
 
-                    // دکمه بازگشت برای شروع مجدد
                     EitaaApp.BackButton.onClick(resetApp);
                     EitaaApp.BackButton.show();
                 }
@@ -227,7 +228,7 @@
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'none';
                 statusDiv.innerText = '';
-                finalLinkContainer.innerHTML = ''; // پاک کردن لینک دانلود قبلی
+                openInBrowserContainer.innerHTML = '';
                 
                 uploadInput.value = '';
                 if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
