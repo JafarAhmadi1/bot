@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
     const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
     
-    // ما از یک ساختار داده بهتر برای نگهداری اطلاعات قاب‌ها استفاده می‌کنیم
     const FRAMES_DATA = [
         { label: "🖼️ قاب ۱", url: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png" },
         { label: "🖼️ قاب ۲", url: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png" },
@@ -111,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
         EitaaApp.ready();
         isEitaaEnv = true;
         EitaaApp.MainButton.hide();
+        console.log("در محیط ایتا اجرا شد.");
     } catch (e) { 
         console.log("در مرورگر معمولی اجرا شد.");
         isEitaaEnv = false;
@@ -144,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function generatePreview(frameUrl) {
         selectionArea.style.display = 'none';
+        outputDiv.style.display = 'block';
         outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش...";
         try {
             finalImageBlob = await createFramedImage(userFile, frameUrl);
@@ -175,17 +176,17 @@ document.addEventListener('DOMContentLoaded', function () {
         outputDiv.style.display = 'block';
 
         if (!finalImageBlob) {
-            outputDiv.innerHTML = `<p class="error">خطا: تصویری برای آپلود یافت نشد.</p>`;
+            outputDiv.innerHTML = `<p class="error">خطا: تصویری برای پردازش یافت نشد.</p>`;
             restartButton.style.display = 'block';
             return;
         }
 
-        // بررسی محیط اجرایی
+        // بررسی محیط اجرایی و انتخاب روش مناسب
         if (isEitaaEnv) {
-            // اگر داخل ایتا هستیم، از طریق ورکر و بله آپلود کن
+            // اگر داخل ایتا هستیم، از طریق ورکر و بله آپلود می‌کنیم
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
-            // اگر در مرورگر معمولی هستیم، مستقیم دانلود کن (امن)
+            // اگر در مرورگر معمولی هستیم، مستقیم فایل را برای دانلود به کاربر می‌دهیم
             downloadBlobDirectly(finalImageBlob);
         }
     }
@@ -222,29 +223,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 3. تابع آپلود به بله (که فقط در محیط ایتا فراخوانی می‌شود)
     async function uploadBlobToBaleViaWorker(imageBlob) {
-        outputDiv.innerHTML = "در حال ارسال تصویر...";
+        outputDiv.innerHTML = "⏳ در حال ارسال تصویر به سرور...";
+        confirmUploadBtn.disabled = true;
+
         try {
-            const uniqueWorkerUrl = `${workerUrl}?v=${Date.now()}`;
             const formData = new FormData();
             formData.append("file", imageBlob, `Parcham-Bala-${Date.now()}.jpg`);
 
-            const response = await fetch(uniqueWorkerUrl, { method: "POST", body: formData });
+            const response = await fetch(workerUrl, { method: "POST", body: formData });
             const result = await response.json();
 
             if (!response.ok || result.error) {
+                // نمایش خطای دریافتی از سرور برای دیباگ بهتر
                 throw new Error(result.details || result.error || "خطا در ارتباط با سرور.");
             }
 
             outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت بارگذاری شد.</p>`;
             const downloadUrl = result.url;
             
-            // دکمه دانلود معمولی را هم نمایش می‌دهیم
+            // نمایش لینک دانلود معمولی برای اطمینان
             finalLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
             
-            // تنظیم دکمه اصلی ایتا
-            const uniqueDownloadUrlForEitaa = `${downloadUrl}?v=${Date.now()}`;
+            // تنظیم دکمه اصلی ایتا برای دانلود مستقیم
             EitaaApp.MainButton.setText("دانلود تصویر");
-            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(uniqueDownloadUrlForEitaa));
+            EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true}));
             EitaaApp.MainButton.show();
 
             restartButton.style.display = 'inline-block';
@@ -252,6 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
             restartButton.style.display = 'block';
+        } finally {
+            confirmUploadBtn.disabled = false;
         }
     }
     
@@ -267,22 +271,39 @@ document.addEventListener('DOMContentLoaded', function () {
             img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر قاب."));
             img.src = src;
         });
+
+        // برای جلوگیری از مشکلات Caching در بارگذاری قاب
+        const frameUrlWithCacheBust = `${frameImageUrl}?v=${Date.now()}`;
+
         const userImageUrl = URL.createObjectURL(userImageFile);
-        const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
+        const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrlWithCacheBust)]);
+        
         URL.revokeObjectURL(userImageUrl);
+        
         const size = 512;
         canvas.width = size; canvas.height = size;
+        
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, size, size);
-        const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
-        let drawWidth = size, drawHeight = size, x = 0, y = 0;
-        if (imgAspectRatio > 1) {
-            drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
-        } else {
-            drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
+
+        // منطق هوشمند برای نمایش تصویر (crop to fit)
+        const userAspect = userImg.width / userImg.height;
+        let sx, sy, sWidth, sHeight;
+        if (userAspect > 1) { // تصویر عریض است
+            sHeight = userImg.height;
+            sWidth = sHeight;
+            sx = (userImg.width - sWidth) / 2;
+            sy = 0;
+        } else { // تصویر بلند یا مربع است
+            sWidth = userImg.width;
+            sHeight = sWidth;
+            sx = 0;
+            sy = (userImg.height - sHeight) / 2;
         }
-        ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
+        
+        ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
         ctx.drawImage(frameImg, 0, 0, size, size);
+        
         return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); 
     }
 
