@@ -33,38 +33,51 @@
     <div class="container">
         <h1>🇮🇷 پویش پرچم بالا</h1>
         
-        <div id="selection-area">
-            <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
-            
-            <!-- این پاراگراف جدید است که فقط برای کاربران ایتا نمایش داده می‌شود -->
-            <p id="eitaa-user-tip" style="display: none; font-size: 14px; background-color: #e7f3fe; color: #0c5460; padding: 10px; border-radius: 8px; border: 1px solid #bde5f8;">
-                💡 برای سرعت و کیفیت بهتر، می‌توانید از نسخه وب ما در 
-                <a href="https://jafarahmadi1.github.io/bot/" target="_blank" style="color: #0056b3; font-weight: bold;">این آدرس</a>
-                استفاده کنید.
+        <!-- این بخش جدید است که فقط برای کاربران ایتا نمایش داده می‌شود -->
+        <div id="initial-choice-container" style="display: none;">
+            <p style="font-size: 16px; background-color: #e7f3fe; color: #0c5460; padding: 15px; border-radius: 8px; border: 1px solid #bde5f8;">
+                💡 **پیشنهاد ویژه:**<br>
+                برای سرعت و کیفیت بهتر، آیا مایلید به نسخه سریع وب منتقل شوید؟
             </p>
-
             <div>
-                <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
-                <input type="file" id="fileInput" accept="image/*">
-            </div>
-            <div id="frame-selection" style="display: none;"></div>
-        </div>
-        
-        <canvas id="imageCanvas"></canvas>
-
-        <div id="preview-container" style="display: none;">
-            <h3>پیش‌نمایش تصویر نهایی</h3>
-            <img id="preview-image" alt="پیش‌نمایش تصویر با قاب">
-            <p>آیا از نتیجه راضی هستید؟</p>
-            <div>
-                <button id="cancel-preview-btn" class="action-button secondary-button">🔄 انتخاب قاب دیگر</button>
-                <button id="confirm-upload-btn" class="action-button">✅ بله، دانلودش کن</button>
+                <!-- دکمه بله یک لینک مستقیم به نسخه وب است -->
+                <a href="https://jafarahmadi1.github.io/bot/" target="_blank" class="action-button">
+                    ✅ بله، من را به نسخه وب ببر
+                </a>
+                <!-- دکمه خیر، برنامه را در همینجا ادامه می‌دهد -->
+                <button id="continue-no-btn" class="action-button secondary-button">
+                     خیر، در همینجا ادامه می‌دهم
+                </button>
             </div>
         </div>
 
-        <div id="output"><p>منتظر انتخاب شما...</p></div>
-        <p id="final-link" style="margin-top: 10px;"></p>
-        <button id="restart-button" class="action-button secondary-button" style="display: none;">شروع مجدد</button>
+        <!-- بخش اصلی برنامه که در ابتدا مخفی است -->
+        <div id="main-app-container" style="display: none;">
+            <div id="selection-area">
+                <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+                <div>
+                    <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                <div id="frame-selection" style="display: none;"></div>
+            </div>
+            
+            <canvas id="imageCanvas"></canvas>
+
+            <div id="preview-container" style="display: none;">
+                <h3>پیش‌نمایش تصویر نهایی</h3>
+                <img id="preview-image" alt="پیش‌نمایش تصویر با قاب">
+                <p>آیا از نتیجه راضی هستید؟</p>
+                <div>
+                    <button id="cancel-preview-btn" class="action-button secondary-button">🔄 انتخاب قاب دیگر</button>
+                    <button id="confirm-upload-btn" class="action-button">✅ بله، دانلودش کن</button>
+                </div>
+            </div>
+
+            <div id="output"><p>منتظر انتخاب شما...</p></div>
+            <p id="final-link" style="margin-top: 10px;"></p>
+            <button id="restart-button" class="action-button secondary-button" style="display: none;">شروع مجدد</button>
+        </div>
     </div>
 
 <script>
@@ -78,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { label: "🏴 قاب محرم", url: "https://i.postimg.cc/HnzshzbR/Parcham-Bala-M3.png" }
     ];
 
-    // --- دسترسی به عناصر ---
+    // --- دسترسی به عناصر اصلی ---
     const fileInput = document.getElementById('fileInput');
     const outputDiv = document.getElementById('output');
     const canvas = document.getElementById('imageCanvas');
@@ -88,26 +101,41 @@ document.addEventListener('DOMContentLoaded', function () {
     const previewContainer = document.getElementById('preview-container');
     const confirmUploadBtn = document.getElementById('confirm-upload-btn');
     
+    // --- دسترسی به عناصر جدید برای انتخاب اولیه ---
+    const initialChoiceContainer = document.getElementById('initial-choice-container');
+    const mainAppContainer = document.getElementById('main-app-container');
+    const continueNoBtn = document.getElementById('continue-no-btn');
+
     // --- متغیر وضعیت ---
     let finalImageBlob = null;
     let isEitaaEnv = false;
 
-    // --- بخش تشخیص محیط (روش جدید و قابل اعتماد) ---
+    // --- بخش تشخیص محیط و نمایش اولیه ---
     if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
         window.Eitaa.WebApp.ready();
-        // نمایش پیام راهنمایی برای کاربران ایتا
-        document.getElementById('eitaa-user-tip').style.display = 'block';
+        // در محیط ایتا، ابتدا سوال را نمایش بده
+        initialChoiceContainer.style.display = 'block';
     } else {
         isEitaaEnv = false;
+        // در مرورگر وب، مستقیم برنامه اصلی را نمایش بده
+        mainAppContainer.style.display = 'block';
     }
 
     // --- رویدادها ---
+    // رویداد جدید برای دکمه "خیر، ادامه می‌دهم"
+    continueNoBtn.addEventListener('click', () => {
+        initialChoiceContainer.style.display = 'none';
+        mainAppContainer.style.display = 'block';
+    });
+
+    // رویدادهای قبلی برنامه
     fileInput.addEventListener('change', handleFileSelect);
     restartButton.addEventListener('click', resetApp);
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
     document.getElementById('cancel-preview-btn').addEventListener('click', cancelPreview);
 
+    // --- توابع اصلی برنامه ---
     function handleConfirmUpload() {
         previewContainer.style.display = 'none';
         outputDiv.style.display = 'block';
