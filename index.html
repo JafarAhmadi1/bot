@@ -32,20 +32,17 @@
     
     <div class="container">
         <h1 style="margin-bottom: 5px;">🇮🇷 پویش پرچم بالا</h1>
-        <!-- این بخش جدید برای نمایش شمارنده است -->
         <p id="visitor-counter-container" style="display: none; margin-top: 0; font-size: 12px; color: #888;">
-            تعداد شرکت‌کنندگان در این پویش: <span id="visitor-count">...</span>
+            تعداد تصاویر ساخته شده: <span id="visitor-count">...</span>
         </p>
         
-        <!-- بخش انتخاب اولیه برای کاربران ایتا -->
         <div id="initial-choice-container" style="display: none;">
             <p style="font-size: 16px; background-color: #e7f3fe; color: #0c5460; padding: 15px; border-radius: 8px; border: 1px solid #bde5f8;">
                 💡 **پیشنهاد ویژه:**<br>
                 برای سرعت و کیفیت بهتر، آیا مایلید به نسخه سریع وب منتقل شوید؟
             </p>
             <div>
-                <!-- !!! این آدرس را حتما با آدرس گیت‌هاب خود جایگزین کنید !!! -->
-                <a href="https://jafarahmadi1.github.io/bot/" target="_blank" class="action-button">
+                <a href="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/" target="_blank" class="action-button">
                     ✅ بله، من را به نسخه وب ببر
                 </a>
                 <button id="continue-no-btn" class="action-button secondary-button">
@@ -54,7 +51,6 @@
             </div>
         </div>
 
-        <!-- بخش اصلی برنامه -->
         <div id="main-app-container" style="display: none;">
             <div id="selection-area">
                 <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
@@ -134,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         isEitaaEnv = false;
         mainAppContainer.style.display = 'block';
-        updateVisitorCount();
     }
 
     // --- رویدادها ---
@@ -171,6 +166,11 @@ document.addEventListener('DOMContentLoaded', function () {
             a.style.display = 'none'; a.href = url; a.download = fileName;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            // *** این خط تغییر کرده است ***
+            // شمارنده فقط در این لحظه (موفقیت در ساخت و دانلود) فراخوانی می‌شود
+            updateVisitorCount();
+
             outputDiv.innerHTML = `<p class="success">✅ دانلود شما آغاز شد.</p>`;
             restartButton.style.display = 'inline-block';
         } catch (error) {
@@ -206,25 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function generatePreview(userFile, frameUrl) { const selectionArea = document.getElementById('selection-area'); selectionArea.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'block'; } }
     function cancelPreview() { const selectionArea = document.getElementById('selection-area'); previewContainer.style.display = 'none'; selectionArea.style.display = 'block'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>'; URL.revokeObjectURL(document.getElementById('preview-image').src); finalImageBlob = null; }
     async function createFramedImage(userImageFile, frameImageUrl) { const ctx = canvas.getContext('2d'); const loadImage = (src) => new Promise((resolve, reject) => { const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = () => resolve(img); img.onerror = () => reject(new Error("خطا در بارگذاری قاب")); img.src = src; }); const userImageUrl = URL.createObjectURL(userImageFile); const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]); URL.revokeObjectURL(userImageUrl); const size = 512; canvas.width = size; canvas.height = size; const userAspect = userImg.width / userImg.height; let sx, sy, sWidth, sHeight; if (userAspect > 1) { sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0; } else { sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2; } ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size); ctx.drawImage(frameImg, 0, 0, size, size); return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); }
-    function resetApp() {
-        finalImageBlob = null;
-        if (document.getElementById('preview-image').src) {
-            URL.revokeObjectURL(document.getElementById('preview-image').src);
-        }
-        fileInput.value = '';
-        const selectionArea = document.getElementById('selection-area');
-        selectionArea.style.display = 'block';
-        document.getElementById('upload-label').style.display = 'inline-block';
-        document.getElementById('frame-selection').style.display = 'none';
-        previewContainer.style.display = 'none';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
-        finalLinkContainer.innerHTML = '';
-        restartButton.style.display = 'none';
-        if (isEitaaEnv) {
-            window.Eitaa.WebApp.MainButton.hide();
-        }
-    }
+    function resetApp() { finalImageBlob = null; if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); } fileInput.value = ''; const selectionArea = document.getElementById('selection-area'); selectionArea.style.display = 'block'; document.getElementById('upload-label').style.display = 'inline-block'; document.getElementById('frame-selection').style.display = 'none'; previewContainer.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>'; finalLinkContainer.innerHTML = ''; restartButton.style.display = 'none'; if (isEitaaEnv) { window.Eitaa.WebApp.MainButton.hide(); } }
 });
 </script>
 
