@@ -109,16 +109,29 @@ document.addEventListener('DOMContentLoaded', function () {
     let isEitaaEnv = false;
 
     // --- بخش شمارنده بازدید ---
-    async function updateVisitorCount() {
+    // این تابع فقط عدد فعلی را میخواند و نمایش میدهد
+    async function fetchAndDisplayCount() {
         visitorCounterContainer.style.display = 'block';
         try {
-            const response = await fetch(`${workerUrl}count?t=${Date.now()}`);
+            const response = await fetch(`${workerUrl}count`, { method: 'GET' });
             if (!response.ok) throw new Error('پاسخ شبکه صحیح نبود');
             const count = await response.text();
             visitorCountSpan.textContent = parseInt(count).toLocaleString('fa');
         } catch (error) {
-            console.error("خطا در دریافت تعداد بازدید:", error);
+            console.error("خطا در خواندن تعداد بازدید:", error);
             visitorCountSpan.textContent = 'نامشخص';
+        }
+    }
+
+    // این تابع عدد را افزایش میدهد و عدد جدید را نمایش میدهد
+    async function incrementAndDisplayCount() {
+        try {
+            const response = await fetch(`${workerUrl}count`, { method: 'POST' });
+            if (!response.ok) throw new Error('پاسخ شبکه صحیح نبود');
+            const newCount = await response.text();
+            visitorCountSpan.textContent = parseInt(newCount).toLocaleString('fa');
+        } catch (error) {
+            console.error("خطا در افزایش تعداد بازدید:", error);
         }
     }
 
@@ -130,6 +143,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         isEitaaEnv = false;
         mainAppContainer.style.display = 'block';
+        // به محض باز شدن نسخه وب، عدد فعلی را بخوان و نمایش بده
+        fetchAndDisplayCount();
     }
 
     // --- رویدادها ---
@@ -137,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function () {
         initialChoiceContainer.style.display = 'none';
         mainAppContainer.style.display = 'block';
     });
-
     fileInput.addEventListener('change', handleFileSelect);
     restartButton.addEventListener('click', resetApp);
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
@@ -147,15 +161,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function handleConfirmUpload() {
         previewContainer.style.display = 'none';
         outputDiv.style.display = 'block';
-        if (!finalImageBlob) {
-            outputDiv.innerHTML = `<p class="error">خطا: تصویری یافت نشد.</p>`;
-            return;
-        }
-        if (isEitaaEnv) {
-            uploadBlobToBaleViaWorker(finalImageBlob);
-        } else {
-            downloadBlobDirectly(finalImageBlob);
-        }
+        if (!finalImageBlob) { outputDiv.innerHTML = `<p class="error">خطا: تصویری یافت نشد.</p>`; return; }
+        if (isEitaaEnv) { uploadBlobToBaleViaWorker(finalImageBlob); } else { downloadBlobDirectly(finalImageBlob); }
     }
 
     function downloadBlobDirectly(blob) {
@@ -167,9 +174,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            // *** این خط تغییر کرده است ***
-            // شمارنده فقط در این لحظه (موفقیت در ساخت و دانلود) فراخوانی می‌شود
-            updateVisitorCount();
+            // پس از دانلود موفق، شمارنده را افزایش بده
+            incrementAndDisplayCount();
 
             outputDiv.innerHTML = `<p class="success">✅ دانلود شما آغاز شد.</p>`;
             restartButton.style.display = 'inline-block';
@@ -179,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function uploadBlobToBaleViaWorker(imageBlob) {
+        // ... (این تابع بدون تغییر باقی می‌ماند)
         outputDiv.innerHTML = "⏳ در حال ارسال تصویر به سرور...";
         confirmUploadBtn.disabled = true;
         try {
@@ -200,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی ---
+    // --- توابع کمکی (بدون تغییر) ---
     async function handleFileSelect(event) { if (event.target.files.length === 0) return; const userFile = event.target.files[0]; const selectionArea = document.getElementById('selection-area'); document.getElementById('upload-label').style.display = 'none'; outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`; showFrameSelection(userFile); }
     function showFrameSelection(userFile) { const frameSelectionDiv = document.getElementById('frame-selection'); frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>'; FRAMES_DATA.forEach(frame => { const button = document.createElement('button'); button.innerText = frame.label; button.className = 'action-button'; button.onclick = () => generatePreview(userFile, frame.url); frameSelectionDiv.appendChild(button); }); frameSelectionDiv.style.display = 'block'; }
     async function generatePreview(userFile, frameUrl) { const selectionArea = document.getElementById('selection-area'); selectionArea.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'block'; } }
