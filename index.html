@@ -10,7 +10,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; text-align: center; }
         .container { max-width: 600px; margin: 2em auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { font-size: 24px; margin-bottom: 10px; color: #0077cc; }
+        h1 { font-size: 24px; margin-bottom: 0; color: #0077cc; }
         p { font-size: 16px; color: #606770; }
         
         .action-button { display: inline-block; padding: 12px 25px; margin: 5px; border: none; border-radius: 8px; background-color: #0077cc; color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; text-decoration: none; }
@@ -31,27 +31,30 @@
 <body>
     
     <div class="container">
-        <h1>🇮🇷 پویش پرچم بالا</h1>
+        <h1 style="margin-bottom: 5px;">🇮🇷 پویش پرچم بالا</h1>
+        <!-- این بخش جدید برای نمایش شمارنده است -->
+        <p id="visitor-counter-container" style="display: none; margin-top: 0; font-size: 12px; color: #888;">
+            تعداد شرکت‌کنندگان در این پویش: <span id="visitor-count">...</span>
+        </p>
         
-        <!-- این بخش جدید است که فقط برای کاربران ایتا نمایش داده می‌شود -->
+        <!-- بخش انتخاب اولیه برای کاربران ایتا -->
         <div id="initial-choice-container" style="display: none;">
             <p style="font-size: 16px; background-color: #e7f3fe; color: #0c5460; padding: 15px; border-radius: 8px; border: 1px solid #bde5f8;">
                 💡 **پیشنهاد ویژه:**<br>
                 برای سرعت و کیفیت بهتر، آیا مایلید به نسخه سریع وب منتقل شوید؟
             </p>
             <div>
-                <!-- دکمه بله یک لینک مستقیم به نسخه وب است -->
+                <!-- !!! این آدرس را حتما با آدرس گیت‌هاب خود جایگزین کنید !!! -->
                 <a href="https://jafarahmadi1.github.io/bot/" target="_blank" class="action-button">
                     ✅ بله، من را به نسخه وب ببر
                 </a>
-                <!-- دکمه خیر، برنامه را در همینجا ادامه می‌دهد -->
                 <button id="continue-no-btn" class="action-button secondary-button">
                      خیر، در همینجا ادامه می‌دهم
                 </button>
             </div>
         </div>
 
-        <!-- بخش اصلی برنامه که در ابتدا مخفی است -->
+        <!-- بخش اصلی برنامه -->
         <div id="main-app-container" style="display: none;">
             <div id="selection-area">
                 <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
@@ -91,45 +94,55 @@ document.addEventListener('DOMContentLoaded', function () {
         { label: "🏴 قاب محرم", url: "https://i.postimg.cc/HnzshzbR/Parcham-Bala-M3.png" }
     ];
 
-    // --- دسترسی به عناصر اصلی ---
+    // --- دسترسی به عناصر ---
     const fileInput = document.getElementById('fileInput');
     const outputDiv = document.getElementById('output');
     const canvas = document.getElementById('imageCanvas');
     const restartButton = document.getElementById('restart-button');
     const finalLinkContainer = document.getElementById('final-link');
-    const selectionArea = document.getElementById('selection-area');
     const previewContainer = document.getElementById('preview-container');
     const confirmUploadBtn = document.getElementById('confirm-upload-btn');
-    
-    // --- دسترسی به عناصر جدید برای انتخاب اولیه ---
     const initialChoiceContainer = document.getElementById('initial-choice-container');
     const mainAppContainer = document.getElementById('main-app-container');
     const continueNoBtn = document.getElementById('continue-no-btn');
+    const visitorCounterContainer = document.getElementById('visitor-counter-container');
+    const visitorCountSpan = document.getElementById('visitor-count');
 
     // --- متغیر وضعیت ---
     let finalImageBlob = null;
     let isEitaaEnv = false;
 
+    // --- بخش شمارنده بازدید ---
+    async function updateVisitorCount() {
+        visitorCounterContainer.style.display = 'block';
+        try {
+            const response = await fetch(`${workerUrl}count?t=${Date.now()}`);
+            if (!response.ok) throw new Error('پاسخ شبکه صحیح نبود');
+            const count = await response.text();
+            visitorCountSpan.textContent = parseInt(count).toLocaleString('fa');
+        } catch (error) {
+            console.error("خطا در دریافت تعداد بازدید:", error);
+            visitorCountSpan.textContent = 'نامشخص';
+        }
+    }
+
     // --- بخش تشخیص محیط و نمایش اولیه ---
     if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
         window.Eitaa.WebApp.ready();
-        // در محیط ایتا، ابتدا سوال را نمایش بده
         initialChoiceContainer.style.display = 'block';
     } else {
         isEitaaEnv = false;
-        // در مرورگر وب، مستقیم برنامه اصلی را نمایش بده
         mainAppContainer.style.display = 'block';
+        updateVisitorCount();
     }
 
     // --- رویدادها ---
-    // رویداد جدید برای دکمه "خیر، ادامه می‌دهم"
     continueNoBtn.addEventListener('click', () => {
         initialChoiceContainer.style.display = 'none';
         mainAppContainer.style.display = 'block';
     });
 
-    // رویدادهای قبلی برنامه
     fileInput.addEventListener('change', handleFileSelect);
     restartButton.addEventListener('click', resetApp);
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
@@ -143,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
             outputDiv.innerHTML = `<p class="error">خطا: تصویری یافت نشد.</p>`;
             return;
         }
-
         if (isEitaaEnv) {
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
@@ -188,13 +200,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی (بدون تغییر) ---
-    async function handleFileSelect(event) { if (event.target.files.length === 0) return; const userFile = event.target.files[0]; document.getElementById('upload-label').style.display = 'none'; outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`; showFrameSelection(userFile); }
+    // --- توابع کمکی ---
+    async function handleFileSelect(event) { if (event.target.files.length === 0) return; const userFile = event.target.files[0]; const selectionArea = document.getElementById('selection-area'); document.getElementById('upload-label').style.display = 'none'; outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`; showFrameSelection(userFile); }
     function showFrameSelection(userFile) { const frameSelectionDiv = document.getElementById('frame-selection'); frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>'; FRAMES_DATA.forEach(frame => { const button = document.createElement('button'); button.innerText = frame.label; button.className = 'action-button'; button.onclick = () => generatePreview(userFile, frame.url); frameSelectionDiv.appendChild(button); }); frameSelectionDiv.style.display = 'block'; }
-    async function generatePreview(userFile, frameUrl) { selectionArea.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'block'; } }
-    function cancelPreview() { previewContainer.style.display = 'none'; selectionArea.style.display = 'block'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>'; URL.revokeObjectURL(document.getElementById('preview-image').src); finalImageBlob = null; }
+    async function generatePreview(userFile, frameUrl) { const selectionArea = document.getElementById('selection-area'); selectionArea.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'block'; } }
+    function cancelPreview() { const selectionArea = document.getElementById('selection-area'); previewContainer.style.display = 'none'; selectionArea.style.display = 'block'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>'; URL.revokeObjectURL(document.getElementById('preview-image').src); finalImageBlob = null; }
     async function createFramedImage(userImageFile, frameImageUrl) { const ctx = canvas.getContext('2d'); const loadImage = (src) => new Promise((resolve, reject) => { const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = () => resolve(img); img.onerror = () => reject(new Error("خطا در بارگذاری قاب")); img.src = src; }); const userImageUrl = URL.createObjectURL(userImageFile); const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]); URL.revokeObjectURL(userImageUrl); const size = 512; canvas.width = size; canvas.height = size; const userAspect = userImg.width / userImg.height; let sx, sy, sWidth, sHeight; if (userAspect > 1) { sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0; } else { sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2; } ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size); ctx.drawImage(frameImg, 0, 0, size, size); return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); }
-    function resetApp() { finalImageBlob = null; if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); } fileInput.value = ''; selectionArea.style.display = 'block'; document.getElementById('upload-label').style.display = 'inline-block'; document.getElementById('frame-selection').style.display = 'none'; previewContainer.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>'; finalLinkContainer.innerHTML = ''; restartButton.style.display = 'none'; if (isEitaaEnv) { window.Eitaa.WebApp.MainButton.hide(); } }
+    function resetApp() {
+        finalImageBlob = null;
+        if (document.getElementById('preview-image').src) {
+            URL.revokeObjectURL(document.getElementById('preview-image').src);
+        }
+        fileInput.value = '';
+        const selectionArea = document.getElementById('selection-area');
+        selectionArea.style.display = 'block';
+        document.getElementById('upload-label').style.display = 'inline-block';
+        document.getElementById('frame-selection').style.display = 'none';
+        previewContainer.style.display = 'none';
+        outputDiv.style.display = 'block';
+        outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
+        finalLinkContainer.innerHTML = '';
+        restartButton.style.display = 'none';
+        if (isEitaaEnv) {
+            window.Eitaa.WebApp.MainButton.hide();
+        }
+    }
 });
 </script>
 
