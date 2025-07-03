@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پویش پرچم بالا</title>
     
-    <!-- اتصال اسکریپت اصلی ایتا -->
     <script src="https://developer.eitaa.com/eitaa-web-app.js"></script>
 
     <style>
@@ -17,7 +16,6 @@
             --button-text-color: var(--tg-theme-button-text-color, #ffffff);
             --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f1f1f1);
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: var(--bg-color);
@@ -27,22 +25,9 @@
             text-align: center;
             transition: color 0.2s, background-color 0.2s;
         }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 16px;
-            color: var(--hint-color);
-        }
-        
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { font-size: 16px; color: var(--hint-color); }
         .action-button {
             display: inline-block;
             padding: 12px 25px;
@@ -59,48 +44,28 @@
             margin-left: 5px;
             margin-right: 5px;
         }
-        .action-button:hover {
-            opacity: 0.9;
-        }
-
-        #frame-selection button {
-            margin: 5px;
-        }
-        
-        #image-upload {
-            display: none;
-        }
-        
-        #image-canvas {
-            display: none;
-        }
-
+        .action-button:hover { opacity: 0.9; }
+        #image-upload, #image-canvas { display: none; }
         #result-container {
             margin-top: 20px;
             padding: 10px;
             background-color: var(--secondary-bg-color);
             border-radius: 12px;
         }
-
         #result-image {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
             border: 2px solid var(--hint-color);
         }
-
-        #status {
-            margin-top: 15px;
-            font-weight: bold;
-            min-height: 24px;
-        }
+        #status { margin-top: 15px; font-weight: bold; min-height: 24px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>🇮🇷 پویش پرچم بالا</h1>
-        <p> سلام به پویش پرچم بالا خوش آومدید.برای حمایت از **ایران جان** و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+        <p> سلام به پویش پرچم بالا خوش آومدید.برای حمایت از *ایران جان* و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
         
         <label for="image-upload" class="action-button" id="upload-button">۱. انتخاب تصویر پروفایل</label>
         <input type="file" id="image-upload" accept="image/*">
@@ -115,11 +80,8 @@
             <h3>تصویر شما آماده شد!</h3>
             <canvas id="image-canvas"></canvas>
             <img id="result-image" alt="تصویر نهایی با قاب">
-            <div>
-                <!-- تغییر: اضافه کردن target="_blank" -->
-                <p id="download-link" href="#" class="action-button" target="_blank">دانلود تصویر</p>
-                <button id="restart-button" class="action-button">شروع مجدد</button>
-            </div>
+            <!-- تغییر: این div برای نگهداری لینک دانلود جدید استفاده می‌شود -->
+            <div id="finalLinkContainer" style="margin-top: 15px;"></div>
         </div>
     </div>
 
@@ -148,18 +110,11 @@
             const statusDiv = document.getElementById('status');
             const resultContainer = document.getElementById('result-container');
             const resultImage = document.getElementById('result-image');
-            const downloadLink = document.getElementById('download-link');
-            const restartButton = document.getElementById('restart-button');
+            const finalLinkContainer = document.getElementById('finalLinkContainer');
             
             let userImageObjectUrl = null;
-            let finalImageBlob = null;
 
             uploadInput.addEventListener('change', handleImageUpload);
-            restartButton.addEventListener('click', resetApp);
-            downloadLink.addEventListener('click', (event) => {
-                event.preventDefault();
-                if (finalImageBlob) downloadBlobDirectly(finalImageBlob);
-            });
             
             if (isEitaaEnv) {
                 EitaaApp.MainButton.hide();
@@ -178,21 +133,16 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const size = 512;
-                canvas.width = size;
-                canvas.height = size;
+                canvas.width = size; canvas.height = size;
 
                 const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrl)]);
                 
                 const imgAspectRatio = userImg.naturalWidth / userImg.naturalHeight;
                 let drawWidth = size, drawHeight = size, x = 0, y = 0;
                 if (imgAspectRatio > 1) {
-                    drawHeight = size;
-                    drawWidth = drawHeight * imgAspectRatio;
-                    x = (size - drawWidth) / 2;
-               } else {
-                    drawWidth = size; // <-- سمی‌کالن اضافه شد
-                    drawHeight = drawWidth / imgAspectRatio;
-                    y = (size - drawHeight) / 2;
+                    drawHeight = size; drawWidth = drawHeight * imgAspectRatio; x = (size - drawWidth) / 2;
+                } else {
+                    drawWidth = size; drawHeight = drawWidth / imgAspectRatio; y = (size - drawHeight) / 2;
                 }
                 ctx.drawImage(userImg, x, y, drawWidth, drawHeight);
                 ctx.drawImage(frameImg, 0, 0, size, size);
@@ -204,34 +154,36 @@
                 });
             }
 
-            /**
-             * تابع شماره ۲: نتیجه (Blob) را دریافت کرده و UI را به‌روز می‌کند
-             */
             function displayResult(imageBlob) {
-                finalImageBlob = imageBlob; // ذخیره برای دانلود
-
                 if (resultImage.src) URL.revokeObjectURL(resultImage.src);
                 resultImage.src = URL.createObjectURL(imageBlob);
 
-                // نمایش و مخفی‌سازی عناصر صفحه
+                // **تغییر اصلی اینجا اتفاق می‌افتد**
+                // ایجاد لینک دانلود در کانتینر مخصوص
+                const downloadUrl = URL.createObjectURL(imageBlob);
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const fileName = `parcham-bala-${timestamp}.png`;
+                
+                finalLinkContainer.innerHTML = `<a id="final-download-link" href="${downloadUrl}" download="${fileName}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
+
                 statusDiv.style.display = 'none';
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'block';
 
-                // تنظیم دکمه‌های نیتیو ایتا
                 if (isEitaaEnv) {
+                    // دکمه اصلی ایتا روی لینک دانلود جدید کلیک می‌کند
                     EitaaApp.MainButton.setText("✅ دانلود تصویر");
-                    EitaaApp.MainButton.onClick(() => downloadLink.click());
+                    EitaaApp.MainButton.onClick(() => {
+                        document.getElementById('final-download-link').click();
+                    });
                     EitaaApp.MainButton.show();
 
+                    // دکمه بازگشت برای شروع مجدد
                     EitaaApp.BackButton.onClick(resetApp);
                     EitaaApp.BackButton.show();
                 }
             }
 
-            /**
-             * تابع هماهنگ‌کننده: فرآیند ترکیب و نمایش را مدیریت می‌کند
-             */
             async function startImageCompositionProcess(frameUrl) {
                 frameSelectionDiv.querySelectorAll('button').forEach(btn => btn.disabled = true);
                 statusDiv.innerText = "⏳ در حال ساخت تصویر شما... لطفاً صبر کنید.";
@@ -252,7 +204,6 @@
                 
                 if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
                 userImageObjectUrl = URL.createObjectURL(file);
-
                 uploadButton.style.display = 'none';
                 showFrameSelection();
             }
@@ -270,34 +221,18 @@
                 statusDiv.innerText = "عالی! حالا یک قاب انتخاب کنید.";
             }
 
-            function downloadBlobDirectly(blob) {
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const fileName = `parcham-bala-${timestamp}.png`;
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = fileName;
-                // برای لینک دانلود هم target را تنظیم می‌کنیم هرچند در این سناریو تاثیری ندارد
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            }
-
             function resetApp() {
                 uploadButton.style.display = 'inline-block';
                 frameSelectionDiv.style.display = 'none';
                 resultContainer.style.display = 'none';
                 statusDiv.innerText = '';
+                finalLinkContainer.innerHTML = ''; // پاک کردن لینک دانلود قبلی
                 
                 uploadInput.value = '';
                 if (userImageObjectUrl) URL.revokeObjectURL(userImageObjectUrl);
                 if (resultImage.src) URL.revokeObjectURL(resultImage.src);
 
                 userImageObjectUrl = null;
-                finalImageBlob = null;
                 resultImage.src = "";
                 
                 if (isEitaaEnv) {
@@ -309,4 +244,3 @@
     </script>
 </body>
 </html>
-                
