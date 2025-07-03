@@ -28,6 +28,8 @@
         #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
         canvas { display: none; }
         .counter-p { margin-top: 5px; font-size: 12px; color: #888; }
+        .fallback-link { font-size: 12px; color: #606770; margin-top: 15px; background: #f0f2f5; padding: 8px; border-radius: 6px; }
+        code { font-family: 'Courier New', Courier, monospace; direction: ltr; display: inline-block; }
     </style>
 </head>
 <body>
@@ -35,7 +37,6 @@
     <div class="container">
         <h1 style="margin-bottom: 5px;">🇮🇷 پویش پرچم بالا</h1>
         
-        <!-- کانتینر جدید برای نمایش آمار -->
         <div id="stats-container" style="display: none; margin-bottom: 15px;">
              <p id="web-counter-container" class="counter-p" style="display: none;">
                 تعداد شرکت کنندگان از طریق وب: <span id="visitor-count-web">...</span>
@@ -52,13 +53,12 @@
             </p>
             
             <div class="button-container">
-                <a href="https://jafarahmadi1.github.io/bot/" target="_blank" class="action-button">
-                    ✅ بله
-                </a>
-                <button id="continue-no-btn" class="action-button secondary-button">
-                    خیر
-                </button>
+                <!-- دکمه "بله" که با جاوااسکریپت کنترل می‌شود -->
+                <button id="open-web-version-btn" class="action-button">✅ بله</button>
+                <button id="continue-no-btn" class="action-button secondary-button">خیر</button>
             </div>
+             <!-- متن کمکی برای مواقعی که حتی متد رسمی هم کار نمی‌کند (گوشی‌های خیلی قدیمی) -->
+            <p class="fallback-link">اگر دکمه "بله" کار نکرد، لینک زیر را کپی کرده و در مرورگر باز کنید:<br><code>https://jafarahmadi1.github.io/bot/</code></p>
         </div>
 
         <div id="main-app-container" style="display: none;">
@@ -92,7 +92,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
-    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/"; // آدرس ورکر شما
+    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
+    const webAppUrl = "https://jafarahmadi1.github.io/bot/";
     const FRAMES_DATA = [
         { label: "🖼️ قاب ۱", url: "https://i.postimg.cc/C1BBK6h4/Parcham-Frame-1.png" },
         { label: "🖼️ قاب ۲", url: "https://i.postimg.cc/SKsK0zCn/Parcham-Frame-2.png" },
@@ -111,8 +112,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const initialChoiceContainer = document.getElementById('initial-choice-container');
     const mainAppContainer = document.getElementById('main-app-container');
     const continueNoBtn = document.getElementById('continue-no-btn');
+    const openWebVersionBtn = document.getElementById('open-web-version-btn'); // دکمه جدید
     
-    // --- عناصر جدید شمارنده ---
+    // --- عناصر شمارنده ---
     const statsContainer = document.getElementById('stats-container');
     const webCounterContainer = document.getElementById('web-counter-container');
     const totalCounterContainer = document.getElementById('total-counter-container');
@@ -122,14 +124,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- متغیرهای وضعیت ---
     let finalImageBlob = null;
     let isEitaaEnv = false;
-    let currentSource = 'web'; // پیش فرض 'web' است
+    let currentSource = 'web';
 
-    // --- توابع جدید شمارنده ---
+    // --- توابع شمارنده ---
     async function incrementCount() {
         try {
-            // شمارنده را بر اساس منبع فعلی (web یا eitaa) افزایش می دهد
             await fetch(`${workerUrl}increment?source=${currentSource}`, { method: 'POST' });
-            // بعد از افزایش، آمار را دوباره بروزرسانی می کنیم تا کاربر عدد جدید را ببیند
             await fetchAndDisplayCounts();
         } catch (error) {
             console.error(`خطا در افزایش شمارنده برای ${currentSource}:`, error);
@@ -143,11 +143,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok) throw new Error('پاسخ شبکه صحیح نبود');
             const data = await response.json();
             
-            // نمایش شمارنده کل در هر دو محیط
             totalCounterContainer.style.display = 'block';
             visitorCountTotalSpan.textContent = parseInt(data.total).toLocaleString('fa');
 
-            // اگر در محیط وب هستیم، شمارنده وب را هم نمایش می دهیم
             if (!isEitaaEnv) {
                 webCounterContainer.style.display = 'block';
                 visitorCountWebSpan.textContent = parseInt(data.web).toLocaleString('fa');
@@ -164,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- تشخیص محیط و نمایش اولیه ---
     if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
-        currentSource = 'eitaa'; // منبع را به 'eitaa' تغییر می دهیم
+        currentSource = 'eitaa';
         window.Eitaa.WebApp.ready();
         initialChoiceContainer.style.display = 'block';
     } else {
@@ -172,10 +170,15 @@ document.addEventListener('DOMContentLoaded', function () {
         currentSource = 'web';
         mainAppContainer.style.display = 'block';
     }
-    // در هر صورت، شمارنده ها در ابتدا خوانده می شوند
     fetchAndDisplayCounts();
 
     // --- رویدادها ---
+    openWebVersionBtn.addEventListener('click', function() {
+        if (window.Eitaa && window.Eitaa.WebApp) {
+            window.Eitaa.WebApp.openLink(webAppUrl);
+        }
+    });
+    
     continueNoBtn.addEventListener('click', () => {
         initialChoiceContainer.style.display = 'none';
         mainAppContainer.style.display = 'block';
@@ -195,7 +198,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // قبل از آپلود یا دانلود، شمارنده را افزایش بده
         await incrementCount();
 
         if (isEitaaEnv) {
@@ -210,12 +212,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const fileName = `Parcham-Bala-${Date.now()}.jpg`;
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            a.style.display = 'none'; a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
             outputDiv.innerHTML = `<p class="success">✅ دانلود شما آغاز شد.</p>`;
@@ -226,21 +224,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function uploadBlobToBaleViaWorker(imageBlob) {
-        outputDiv.innerHTML = "⏳ در حال دریافت لینک دانلود...";
+        outputDiv.innerHTML = "⏳ در حال ارسال تصویر به سرور...";
         confirmUploadBtn.disabled = true;
         try {
             const formData = new FormData();
             formData.append("file", imageBlob, `Parcham-Bala-${Date.now()}.jpg`);
             const response = await fetch(workerUrl, { method: "POST", body: formData });
             const result = await response.json();
-            if (!response.ok || result.error) {
-                throw new Error(result.details || result.error || "خطای سرور.");
-            }
+            if (!response.ok || result.error) throw new Error(result.details || result.error || "خطای سرور.");
+            
             outputDiv.innerHTML = `<p class="success">✅ بارگذاری موفق.</p>`;
             const downloadUrl = result.url;
             finalLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر</a>`;
             const EitaaApp = window.Eitaa.WebApp;
-            EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl)).show();
+            EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true})).show();
             restartButton.style.display = 'inline-block';
         } catch (error) {
             outputDiv.innerHTML = `<p class="error">❌ خطا در آپلود: ${error.message}</p>`;
@@ -249,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی (بدون تغییر) ---
+    // --- توابع کمکی ---
     function handleFileSelect(event) {
         if (event.target.files.length === 0) return;
         const userFile = event.target.files[0];
@@ -292,7 +289,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('selection-area').style.display = 'block';
         outputDiv.style.display = 'block';
         outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>';
-        URL.revokeObjectURL(document.getElementById('preview-image').src);
+        if (document.getElementById('preview-image').src) {
+            URL.revokeObjectURL(document.getElementById('preview-image').src);
+        }
         finalImageBlob = null;
     }
 
@@ -302,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.onload = () => resolve(img);
-            img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر یا قاب. لطفا از اتصال اینترنت خود مطمئن شوید."));
+            img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر یا قاب."));
             img.src = src;
         });
 
@@ -310,20 +309,13 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
             const size = 512;
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = size; canvas.height = size;
             const userAspect = userImg.width / userImg.height;
             let sx, sy, sWidth, sHeight;
             if (userAspect > 1) { // Landscape
-                sHeight = userImg.height;
-                sWidth = sHeight;
-                sx = (userImg.width - sWidth) / 2;
-                sy = 0;
+                sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0;
             } else { // Portrait or Square
-                sWidth = userImg.width;
-                sHeight = sWidth;
-                sx = 0;
-                sy = (userImg.height - sHeight) / 2;
+                sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2;
             }
             ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
             ctx.drawImage(frameImg, 0, 0, size, size);
