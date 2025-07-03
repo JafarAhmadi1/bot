@@ -198,16 +198,20 @@
             if (resultImage.src) URL.revokeObjectURL(resultImage.src);
             resultImage.src = imageUrl;
 
-            openInBrowserContainer.innerHTML = `<a href="${imageUrl}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
+            openInBrowserContainer.innerHTML = `<a href="${imageUrl}" download="parcham.png" class="action-button" target="_blank">📥 دانلود تصویر در مرورگر</a>`;
             statusDiv.style.display = 'none';
             frameSelectionDiv.style.display = 'none';
             resultContainer.style.display = 'block';
 
             if (isEitaaEnv) {
                 const uniqueDownloadUrlForEitaa = `${imageUrl}?v=${Date.now()}`;
-                EitaaApp.MainButton.setText("📥 دانلود تصویر نهایی");
-                EitaaApp.MainButton.onClick(() => EitaaApp.openLink(uniqueDownloadUrlForEitaa));
-                EitaaApp.MainButton.show();
+                EitaaApp.MainButton.setText("📥 باز کردن تصویر در مرورگر");
+                EitaaApp.MainButton.onClick(() => {
+                window.open(imageUrl, "_blank"); // باز کردن در مرورگر بیرونی
+                // یا اگر window.open عمل نکرد:
+                EitaaApp.openLink(imageUrl);
+                });
+            EitaaApp.MainButton.show();
             }
         }
     </script>
