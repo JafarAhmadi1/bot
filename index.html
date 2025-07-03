@@ -20,15 +20,11 @@
         .secondary-button:hover:not(:disabled) { background-color: #5a6268; }
 
         input[type="file"] { display: none; }
-        
         #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-
         #output { margin-top: 1.5em; padding: 1em; background-color: #f7f7f7; border-radius: 8px; word-wrap: break-word; min-height: 50px; }
         .error { color: #d32f2f; font-weight: bold; }
         .success { color: #388e3c; font-weight: bold; }
-        
         #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
-
         canvas { display: none; }
     </style>
 </head>
@@ -38,7 +34,7 @@
         <h1>🇮🇷 پویش پرچم بالا</h1>
         
         <div id="selection-area">
-            <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b>** و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+            <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
             <div>
                 <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
                 <input type="file" id="fileInput" accept="image/*">
@@ -88,15 +84,17 @@ document.addEventListener('DOMContentLoaded', function () {
     let finalImageBlob = null;
     let isEitaaEnv = false;
 
-    // --- بخش تشخیص محیط ---
+    // --- بخش تشخیص محیط (روش جدید و قابل اعتماد) ---
     console.log("--- شروع اجرای اسکریپت ---");
-    try {
-        window.Eitaa.WebApp.ready();
+    // ما چک می‌کنیم که آیا پلتفرم ایتا (مثلاً 'android' یا 'ios') تعریف شده است یا خیر.
+    // این مقدار فقط در محیط واقعی ایتا وجود دارد.
+    if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
-        console.log("%cتشخیص اولیه: محیط ایتا شناسایی شد. isEitaaEnv = true", "color: blue; font-weight: bold;");
-    } catch (e) { 
+        window.Eitaa.WebApp.ready(); // حالا با اطمینان می‌توانیم آن را فراخوانی کنیم
+        console.log(`%cتشخیص: محیط ایتا شناسایی شد (Platform: ${window.Eitaa.WebApp.platform}). isEitaaEnv = true`, "color: blue; font-weight: bold;");
+    } else {
         isEitaaEnv = false;
-        console.log("%cتشخیص اولیه: محیط مرورگر وب شناسایی شد. isEitaaEnv = false", "color: green; font-weight: bold;");
+        console.log("%cتشخیص: محیط مرورگر وب شناسایی شد. isEitaaEnv = false", "color: green; font-weight: bold;");
     }
 
     // --- رویدادها ---
@@ -105,58 +103,8 @@ document.addEventListener('DOMContentLoaded', function () {
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
     document.getElementById('cancel-preview-btn').addEventListener('click', cancelPreview);
 
-    async function handleFileSelect(event) {
-        if (event.target.files.length === 0) return;
-        const userFile = event.target.files[0];
-        document.getElementById('upload-label').style.display = 'none';
-        outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`;
-        showFrameSelection(userFile);
-    }
-
-    function showFrameSelection(userFile) {
-        const frameSelectionDiv = document.getElementById('frame-selection');
-        frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>';
-        FRAMES_DATA.forEach(frame => {
-            const button = document.createElement('button');
-            button.innerText = frame.label;
-            button.className = 'action-button';
-            button.onclick = () => generatePreview(userFile, frame.url);
-            frameSelectionDiv.appendChild(button);
-        });
-        frameSelectionDiv.style.display = 'block';
-    }
-
-    async function generatePreview(userFile, frameUrl) {
-        selectionArea.style.display = 'none';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش...";
-        try {
-            finalImageBlob = await createFramedImage(userFile, frameUrl);
-            const previewUrl = URL.createObjectURL(finalImageBlob);
-            document.getElementById('preview-image').src = previewUrl;
-            outputDiv.style.display = 'none';
-            previewContainer.style.display = 'block';
-        } catch (error) {
-            outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
-            restartButton.style.display = 'block';
-        }
-    }
-    
-    function cancelPreview() {
-        previewContainer.style.display = 'none';
-        selectionArea.style.display = 'block';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>';
-        URL.revokeObjectURL(document.getElementById('preview-image').src);
-        finalImageBlob = null;
-    }
-
     function handleConfirmUpload() {
-        console.log("دکمه تایید نهایی کلیک شد. در حال بررسی وضعیت...");
-        
-        // این دستور اجرای کد را متوقف می‌کند تا وضعیت متغیرها را ببینیم
-        debugger; 
-
+        console.log("دکمه تایید نهایی کلیک شد.");
         previewContainer.style.display = 'none';
         outputDiv.style.display = 'block';
         if (!finalImageBlob) {
@@ -165,16 +113,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (isEitaaEnv) {
-            console.log("تصمیم: isEitaaEnv برابر true است. تابع آپلود به سرور فراخوانی می‌شود.");
+            console.log("تصمیم: isEitaaEnv برابر true است. آپلود به سرور...");
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
-            console.log("تصمیم: isEitaaEnv برابر false است. تابع دانلود مستقیم فراخوانی می‌شود.");
+            console.log("تصمیم: isEitaaEnv برابر false است. دانلود مستقیم...");
             downloadBlobDirectly(finalImageBlob);
         }
     }
 
     function downloadBlobDirectly(blob) {
-        console.log("تابع downloadBlobDirectly اجرا شد. هیچ درخواستی به سرور ارسال نمی‌شود.");
+        console.log("تابع downloadBlobDirectly اجرا شد.");
         try {
             const fileName = `Parcham-Bala-${Date.now()}.jpg`;
             const url = URL.createObjectURL(blob);
@@ -190,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function uploadBlobToBaleViaWorker(imageBlob) {
-        console.log("تابع uploadBlobToBaleViaWorker اجرا شد. در حال ارسال به سرور...");
+        console.log("تابع uploadBlobToBaleViaWorker اجرا شد.");
         outputDiv.innerHTML = "⏳ در حال ارسال تصویر به سرور...";
         confirmUploadBtn.disabled = true;
         try {
@@ -212,37 +160,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function createFramedImage(userImageFile, frameImageUrl) {
-        const ctx = canvas.getContext('2d');
-        const loadImage = (src) => new Promise((resolve, reject) => {
-            const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = () => resolve(img); img.onerror = () => reject(new Error("خطا در بارگذاری قاب")); img.src = src;
-        });
-        const userImageUrl = URL.createObjectURL(userImageFile);
-        const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
-        URL.revokeObjectURL(userImageUrl);
-        const size = 512; canvas.width = size; canvas.height = size;
-        const userAspect = userImg.width / userImg.height;
-        let sx, sy, sWidth, sHeight;
-        if (userAspect > 1) { sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0; } else { sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2; }
-        ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
-        ctx.drawImage(frameImg, 0, 0, size, size);
-        return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); 
-    }
-
-    function resetApp() {
-        finalImageBlob = null;
-        if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); }
-        fileInput.value = '';
-        selectionArea.style.display = 'block';
-        document.getElementById('upload-label').style.display = 'inline-block';
-        document.getElementById('frame-selection').style.display = 'none';
-        previewContainer.style.display = 'none';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
-        finalLinkContainer.innerHTML = '';
-        restartButton.style.display = 'none';
-        if (isEitaaEnv) { window.Eitaa.WebApp.MainButton.hide(); }
-    }
+    // --- توابع کمکی (بدون تغییر) ---
+    async function handleFileSelect(event) { if (event.target.files.length === 0) return; const userFile = event.target.files[0]; document.getElementById('upload-label').style.display = 'none'; outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`; showFrameSelection(userFile); }
+    function showFrameSelection(userFile) { const frameSelectionDiv = document.getElementById('frame-selection'); frameSelectionDiv.innerHTML = '<p>۲. انتخاب قاب</p>'; FRAMES_DATA.forEach(frame => { const button = document.createElement('button'); button.innerText = frame.label; button.className = 'action-button'; button.onclick = () => generatePreview(userFile, frame.url); frameSelectionDiv.appendChild(button); }); frameSelectionDiv.style.display = 'block'; }
+    async function generatePreview(userFile, frameUrl) { selectionArea.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'block'; } }
+    function cancelPreview() { previewContainer.style.display = 'none'; selectionArea.style.display = 'block'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>'; URL.revokeObjectURL(document.getElementById('preview-image').src); finalImageBlob = null; }
+    async function createFramedImage(userImageFile, frameImageUrl) { const ctx = canvas.getContext('2d'); const loadImage = (src) => new Promise((resolve, reject) => { const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = () => resolve(img); img.onerror = () => reject(new Error("خطا در بارگذاری قاب")); img.src = src; }); const userImageUrl = URL.createObjectURL(userImageFile); const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]); URL.revokeObjectURL(userImageUrl); const size = 512; canvas.width = size; canvas.height = size; const userAspect = userImg.width / userImg.height; let sx, sy, sWidth, sHeight; if (userAspect > 1) { sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0; } else { sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2; } ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size); ctx.drawImage(frameImg, 0, 0, size, size); return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); }
+    function resetApp() { finalImageBlob = null; if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); } fileInput.value = ''; selectionArea.style.display = 'block'; document.getElementById('upload-label').style.display = 'inline-block'; document.getElementById('frame-selection').style.display = 'none'; previewContainer.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>'; finalLinkContainer.innerHTML = ''; restartButton.style.display = 'none'; if (isEitaaEnv) { window.Eitaa.WebApp.MainButton.hide(); } }
 });
 </script>
 
