@@ -74,7 +74,7 @@
         <button id="restart-button" class="action-button secondary-button" style="display: none;">شروع مجدد</button>
     </div>
 
-  <script>
+<script>
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
     const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
@@ -103,18 +103,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- متغیرهای وضعیت ---
     let userFile = null;
     let finalImageBlob = null;
-    let EitaaApp, isEitaaEnv = false;
+    let EitaaApp, isEitaaEnv = false; // متغیر کلیدی برای تشخیص محیط
 
-    // --- راه‌اندازی اولیه ---
+    // --- راه‌اندازی اولیه و تشخیص محیط ---
     try {
+        // این بخش فقط در محیط ایتا با موفقیت اجرا می‌شود
         EitaaApp = window.Eitaa.WebApp;
         EitaaApp.ready();
         isEitaaEnv = true;
         EitaaApp.MainButton.hide();
-        console.log("در محیط ایتا اجرا شد.");
+        console.log("تشخیص محیط: ایتا");
     } catch (e) { 
-        console.log("در مرورگر معمولی اجرا شد.");
+        // در مرورگر معمولی، این بخش اجرا می‌شود
         isEitaaEnv = false;
+        console.log("تشخیص محیط: مرورگر معمولی");
     }
 
     // --- رویدادها ---
@@ -169,9 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
         finalImageBlob = null;
     }
 
-    // --- شروع تغییرات اصلی ---
-
-    // 1. تابع تایید نهایی که تصمیم می‌گیرد کدام روش دانلود استفاده شود
+    // این تابع اصلی است که بر اساس محیط تصمیم می‌گیرد
     function handleConfirmUpload() {
         previewContainer.style.display = 'none';
         outputDiv.style.display = 'block';
@@ -182,38 +182,36 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // بررسی محیط اجرایی و انتخاب روش مناسب
+        // --- منطق کلیدی تصمیم‌گیری ---
         if (isEitaaEnv) {
-            // اگر داخل ایتا هستیم، از طریق ورکر و بله آپلود می‌کنیم
+            // حالت ایتا: آپلود به سرور برای دریافت لینک
+            console.log("عملیات: آپلود به سرور (محیط ایتا)");
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
-            // اگر در مرورگر معمولی هستیم، مستقیم فایل را برای دانلود به کاربر می‌دهیم
+            // حالت مرورگر وب: دانلود مستقیم بدون ارسال به سرور
+            console.log("عملیات: دانلود مستقیم (مرورگر وب)");
             downloadBlobDirectly(finalImageBlob);
         }
     }
 
-    // 2. تابع جدید برای دانلود مستقیم و امن در مرورگر
+    // این تابع فقط در مرورگر معمولی اجرا می‌شود و به سرور کاری ندارد
     function downloadBlobDirectly(blob) {
         try {
             outputDiv.innerHTML = `<p class="success">✅ فایل شما آماده دانلود است.</p>`;
-            const timestamp = Date.now();
-            const fileName = `Parcham-Bala-${timestamp}.jpg`;
+            const fileName = `Parcham-Bala-${Date.now()}.jpg`;
             
-            // ایجاد یک لینک موقت در حافظه برای دانلود
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = fileName; // این خط به مرورگر می‌گوید فایل را دانلود کند
+            a.download = fileName;
             document.body.appendChild(a);
+            a.click();
             
-            a.click(); // شبیه‌سازی کلیک روی لینک برای شروع دانلود
-            
-            // پاک‌سازی
             URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            finalLinkContainer.innerHTML = `<p>دانلود شما باید به صورت خودکار آغاز شده باشد.</p>`;
+            finalLinkContainer.innerHTML = `<p>دانلود شما به صورت خودکار آغاز شد.</p>`;
             restartButton.style.display = 'inline-block';
 
         } catch (error) {
@@ -222,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 3. تابع آپلود به بله (که فقط در محیط ایتا فراخوانی می‌شود)
+    // این تابع فقط در محیط ایتا اجرا می‌شود
     async function uploadBlobToBaleViaWorker(imageBlob) {
         outputDiv.innerHTML = "⏳ در حال ارسال تصویر به سرور...";
         confirmUploadBtn.disabled = true;
@@ -232,38 +230,36 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append("file", imageBlob, `Parcham-Bala-${Date.now()}.jpg`);
 
             const response = await fetch(workerUrl, { method: "POST", body: formData });
-            const result = await response.json();
+            if (!response.ok) { // ابتدا وضعیت کلی پاسخ را چک می‌کنیم
+                const errorText = await response.text();
+                throw new Error(`خطای سرور: ${response.status} - ${errorText}`);
+            }
 
-            if (!response.ok || result.error) {
-                // نمایش خطای دریافتی از سرور برای دیباگ بهتر
-                throw new Error(result.details || result.error || "خطا در ارتباط با سرور.");
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.details || result.error);
             }
 
             outputDiv.innerHTML = `<p class="success">✅ تصویر شما با موفقیت بارگذاری شد.</p>`;
             const downloadUrl = result.url;
             
-            // نمایش لینک دانلود معمولی برای اطمینان
             finalLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر نهایی</a>`;
             
-            // تنظیم دکمه اصلی ایتا برای دانلود مستقیم
             EitaaApp.MainButton.setText("دانلود تصویر");
             EitaaApp.MainButton.onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true}));
             EitaaApp.MainButton.show();
-
             restartButton.style.display = 'inline-block';
 
         } catch (error) {
-            outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
+            outputDiv.innerHTML = `<p class="error">❌ خطا در آپلود: ${error.message}</p>`;
             restartButton.style.display = 'block';
         } finally {
             confirmUploadBtn.disabled = false;
         }
     }
-    
-    // --- پایان تغییرات اصلی ---
-
 
     async function createFramedImage(userImageFile, frameImageUrl) {
+        // این تابع بدون تغییر باقی می‌ماند
         const ctx = canvas.getContext('2d');
         const loadImage = (src) => new Promise((resolve, reject) => {
             const img = new Image();
@@ -273,9 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
             img.src = src;
         });
 
-        // برای جلوگیری از مشکلات Caching در بارگذاری قاب
         const frameUrlWithCacheBust = `${frameImageUrl}?v=${Date.now()}`;
-
         const userImageUrl = URL.createObjectURL(userImageFile);
         const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameUrlWithCacheBust)]);
         
@@ -283,23 +277,17 @@ document.addEventListener('DOMContentLoaded', function () {
         
         const size = 512;
         canvas.width = size; canvas.height = size;
-        
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, size, size);
 
-        // منطق هوشمند برای نمایش تصویر (crop to fit)
         const userAspect = userImg.width / userImg.height;
         let sx, sy, sWidth, sHeight;
-        if (userAspect > 1) { // تصویر عریض است
-            sHeight = userImg.height;
-            sWidth = sHeight;
-            sx = (userImg.width - sWidth) / 2;
-            sy = 0;
-        } else { // تصویر بلند یا مربع است
-            sWidth = userImg.width;
-            sHeight = sWidth;
-            sx = 0;
-            sy = (userImg.height - sHeight) / 2;
+        if (userAspect > 1) { 
+            sHeight = userImg.height; sWidth = sHeight;
+            sx = (userImg.width - sWidth) / 2; sy = 0;
+        } else {
+            sWidth = userImg.width; sHeight = sWidth;
+            sx = 0; sy = (userImg.height - sHeight) / 2;
         }
         
         ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
@@ -309,10 +297,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function resetApp() {
+        // این تابع بدون تغییر باقی می‌ماند
         userFile = null;
         finalImageBlob = null;
         if(previewImage.src) URL.revokeObjectURL(previewImage.src);
-
         fileInput.value = '';
         selectionArea.style.display = 'block';
         uploadLabel.style.display = 'inline-block';
@@ -323,7 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
         outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
         finalLinkContainer.innerHTML = '';
         restartButton.style.display = 'none';
-
         if (isEitaaEnv) {
             EitaaApp.MainButton.hide();
         }
