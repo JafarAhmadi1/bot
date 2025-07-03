@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            outputDiv.innerHTML = `<p class="success">✅ دانلود شما آغاز شد.</p>`;
+            outputDiv.innerHTML = `<p class="success">✅ دانلود شما انجام شد.</p>`;
             restartButton.style.display = 'inline-block';
         } catch (error) {
             outputDiv.innerHTML = `<p class="error">❌ خطا در دانلود: ${error.message}</p>`;
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function generatePreview(userFile, frameUrl) {
         document.getElementById('selection-area').style.display = 'none';
         outputDiv.style.display = 'block';
-        outputDiv.innerHTML = "⏳ در حال ساخت پیش‌نمایش...";
+        outputDiv.innerHTML = "⏳ در حال ساخت ‌تصویر نهایی...";
         try {
             finalImageBlob = await createFramedImage(userFile, frameUrl);
             const previewUrl = URL.createObjectURL(finalImageBlob);
