@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.onload = () => resolve(img);
-            img.onerror = (err) => reject(new Error("خطا در بارگذاری تصویر یا قاب."));
+            img.onerror = (err) => reject(new Error(" 2خطا در بارگذاری تصویر یا قاب."));
             img.src = src;
         });
 
