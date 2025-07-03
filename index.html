@@ -18,6 +18,7 @@
         .action-button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
         .secondary-button { background-color: #6c757d; }
         .secondary-button:hover:not(:disabled) { background-color: #5a6268; }
+        .button-container { display: flex; gap: 10px; /* فاصله بین دکمه‌ها */ justify-content: center; /* وسط‌چین کردن */ align-items: center; flex-wrap: wrap;}
 
         input[type="file"] { display: none; }
         #frame-selection { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
@@ -38,17 +39,20 @@
         
         <div id="initial-choice-container" style="display: none;">
             <p style="font-size: 16px; background-color: #e7f3fe; color: #0c5460; padding: 15px; border-radius: 8px; border: 1px solid #bde5f8;">
-                💡 **پیشنهاد ویژه:**<br>
-                برای سرعت و کیفیت بهتر، آیا مایلید به نسخه سریع وب منتقل شوید؟
+                <br>
+                برای سرعت و کیفیت بهتر، آیا مایلید به نسخه سریع وب منتقل شوید؟ 💡  
             </p>
-            <div>
-                <a href="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/" target="_blank" class="action-button">
-                    ✅ بله، من را به نسخه وب ببر
-                </a>
-                <button id="continue-no-btn" class="action-button secondary-button">
-                     خیر، در همینجا ادامه می‌دهم
-                </button>
-            </div>
+            
+<div class="button-container">
+    <a href="https://jafarahmadi1.github.io/bot/" target="_blank" class="action-button">
+        ✅ بله
+    </a>
+    <button id="continue-no-btn" class="action-button secondary-button">
+        خیر
+    </button>
+</div>
+
+            
         </div>
 
         <div id="main-app-container" style="display: none;">
