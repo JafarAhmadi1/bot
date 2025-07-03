@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function downloadBlobDirectly(blob) {
         try {
-            const fileName = `Parcham-Bala-${Date.now()}.jpg`;
+            const fileName = `Parcham_Bala_${Date.now()}.jpg`;
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none'; a.href = url; a.download = fileName;
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmUploadBtn.disabled = true;
         try {
             const formData = new FormData();
-            formData.append("file", imageBlob, `Parcham-Bala-${Date.now()}.jpg`);
+            formData.append("file", imageBlob, `Parcham_Bala_${Date.now()}.jpg`);
             const response = await fetch(workerUrl, { method: "POST", body: formData });
             const result = await response.json();
             if (!response.ok || result.error) throw new Error(result.details || result.error || "خطای سرور.");
