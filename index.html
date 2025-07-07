@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             totalCounterContainer.style.display = 'block';
             visitorCountTotalSpan.textContent = parseInt(data.total).toLocaleString('fa');
-            if (currentSource === 'web' && !eitaaInitDataString) {
+            if (currentSource === 'web' ) {
                 webCounterContainer.style.display = 'block';
                 visitorCountWebSpan.textContent = parseInt(data.web).toLocaleString('fa');
             } else {
