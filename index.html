@@ -28,8 +28,6 @@
         #preview-container img { max-width: 80%; height: auto; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 1em; }
         canvas { display: none; }
         .counter-p { margin-top: 5px; font-size: 12px; color: #888; }
-        .fallback-link { font-size: 12px; color: #606770; margin-top: 15px; background: #f0f2f5; padding: 8px; border-radius: 6px; }
-        code { font-family: 'Courier New', Courier, monospace; direction: ltr; display: inline-block; }
     </style>
 </head>
 <body>
@@ -86,14 +84,10 @@
         </div>
     </div>
 
-
-
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
-    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/"; // آدرس ورکر شما
+    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
     const webAppUrl = "https://jafarahmadi1.github.io/bot/";
     const FRAMES_DATA = [
         { label: "🖼️ قاب ۱", url: "frames/Parcham_Frame_1.png" },
@@ -103,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
 
     // --- دسترسی به عناصر ---
+    // (بدون تغییر) ...
     const fileInput = document.getElementById('fileInput');
     const outputDiv = document.getElementById('output');
     const canvas = document.getElementById('imageCanvas');
@@ -124,11 +119,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let finalImageBlob = null;
     let isEitaaEnv = false;
     let currentSource = 'web';
+    // <<< CHANGE START: متغیر جدید برای ذخیره اطلاعات کاربر ایتا
+    let eitaaInitDataString = null;
+    // <<< CHANGE END
 
     // --- توابع شمارنده ---
+    // (بدون تغییر) ...
     async function incrementCount() {
         try {
-            await fetch(`${workerUrl}increment?source=${currentSource}`, { method: 'POST' });
+            // <<< CHANGE START: در نسخه وب، اگر اطلاعات ایتا وجود داشت، منبع را eitaa ثبت میکنیم
+            const sourceForCount = eitaaInitDataString ? 'eitaa' : currentSource;
+            await fetch(`${workerUrl}increment?source=${sourceForCount}`, { method: 'POST' });
+            // <<< CHANGE END
             await fetchAndDisplayCounts();
         } catch (error) {
             console.error(`خطا در افزایش شمارنده برای ${currentSource}:`, error);
@@ -145,12 +147,14 @@ document.addEventListener('DOMContentLoaded', function () {
             totalCounterContainer.style.display = 'block';
             visitorCountTotalSpan.textContent = parseInt(data.total).toLocaleString('fa');
 
-            if (!isEitaaEnv) {
+            // <<< CHANGE START: نمایش آمار وب فقط اگر واقعا از وب آمده باشیم
+            if (!isEitaaEnv && !eitaaInitDataString) {
                 webCounterContainer.style.display = 'block';
                 visitorCountWebSpan.textContent = parseInt(data.web).toLocaleString('fa');
             } else {
                  webCounterContainer.style.display = 'none';
             }
+            // <<< CHANGE END
         } catch (error) {
             console.error("خطا در خواندن تعداد بازدید:", error);
             visitorCountTotalSpan.textContent = 'نامشخص';
@@ -159,12 +163,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- تشخیص محیط و نمایش اولیه ---
+    // <<< CHANGE START: بررسی پارامتر URL در ابتدای بارگذاری
+    const urlParams = new URLSearchParams(window.location.search);
+    const eitaaDataFromUrl = urlParams.get('eitaa_data');
+    if (eitaaDataFromUrl) {
+        eitaaInitDataString = eitaaDataFromUrl;
+    }
+    // <<< CHANGE END
+
     if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
         currentSource = 'eitaa';
         window.Eitaa.WebApp.ready();
         window.Eitaa.WebApp.expand();
-        initialChoiceContainer.style.display = 'block';
+        // <<< CHANGE START: اگر از وب‌اپ ایتا به نسخه وب هدایت شده باشیم، دیگر صفحه انتخاب را نشان نده
+        if (eitaaInitDataString) {
+             mainAppContainer.style.display = 'block';
+        } else {
+            initialChoiceContainer.style.display = 'block';
+        }
+        // <<< CHANGE END
     } else {
         isEitaaEnv = false;
         currentSource = 'web';
@@ -175,7 +193,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- رویدادها ---
     openWebVersionBtn.addEventListener('click', function() {
         if (window.Eitaa && window.Eitaa.WebApp) {
-            window.Eitaa.WebApp.openLink(webAppUrl);
+            // <<< CHANGE START: خواندن اطلاعات کاربر و افزودن به URL
+            const initData = window.Eitaa.WebApp.initData;
+            if (initData) {
+                const finalUrl = `${webAppUrl}?eitaa_data=${encodeURIComponent(initData)}`;
+                window.Eitaa.WebApp.openLink(finalUrl);
+            } else {
+                // اگر به هر دلیلی اطلاعات در دسترس نبود، به همان نسخه وب بدون اطلاعات برو
+                window.Eitaa.WebApp.openLink(webAppUrl);
+            }
+            // <<< CHANGE END
         }
     });
     
@@ -189,36 +216,6 @@ document.addEventListener('DOMContentLoaded', function () {
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
     document.getElementById('cancel-preview-btn').addEventListener('click', cancelPreview);
 
-    // --- [جدید] تابع ارسال اطلاعات کاربر به ورکر ---
-    async function sendUserInfoToWorker() {
-        // این تابع فقط در محیط ایتا اجرا می‌شود
-        if (!isEitaaEnv) return;
-
-        try {
-            const user = window.Eitaa.WebApp.initDataUnsafe?.user;
-            if (!user) {
-                console.log("اطلاعات کاربری ایتا برای ثبت یافت نشد.");
-                return;
-            }
-
-            // ارسال اطلاعات کاربر به اندپوینت جدید در ورکر
-            const response = await fetch(`${workerUrl}log-user`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(user)
-            });
-
-            if(response.ok) {
-                 console.log("اطلاعات کاربر با موفقیت برای ثبت ارسال شد.");
-            } else {
-                 console.error("خطا در ارسال اطلاعات کاربر به ورکر.");
-            }
-
-        } catch (error) {
-            console.error("خطای کلی در ارسال اطلاعات کاربر:", error);
-        }
-    }
-
     // --- توابع اصلی برنامه ---
     async function handleConfirmUpload() {
         previewContainer.style.display = 'none';
@@ -228,21 +225,21 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // ۱. ابتدا شمارنده افزایش می‌یابد
         await incrementCount();
-        
-        // ۲. [جدید] سپس اطلاعات کاربر (اگر در ایتا باشد) در پس‌زمینه ارسال می‌شود
-        sendUserInfoToWorker();
 
-        // ۳. در نهایت، فرآیند دانلود یا آپلود تصویر انجام می‌شود
-        if (isEitaaEnv) {
+        // <<< CHANGE START: بررسی اینکه آیا از داخل ایتا هستیم یا از نسخه وب (با اطلاعات ایتا)
+        if (isEitaaEnv || eitaaInitDataString) {
+            // در هر دو حالت (داخل ایتا یا وب با اطلاعات ایتا)، به ورکر آپلود می‌کنیم
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
+            // فقط اگر کاربر وب معمولی بود، مستقیم دانلود می‌کند
             downloadBlobDirectly(finalImageBlob);
         }
+        // <<< CHANGE END
     }
 
     function downloadBlobDirectly(blob) {
+        // (بدون تغییر) ...
         try {
             const fileName = `Parcham_Bala_${Date.now()}.jpg`;
             const url = URL.createObjectURL(blob);
@@ -259,12 +256,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function uploadBlobToBaleViaWorker(imageBlob) {
-        outputDiv.innerHTML = "⏳ در حال آپلود تصویر و دریافت لینک دانلود...";
+        outputDiv.innerHTML = "⏳ در حال دریافت لینک دانلود...";
         confirmUploadBtn.disabled = true;
         try {
             const formData = new FormData();
             formData.append("file", imageBlob, `Parcham_Bala_${Date.now()}.jpg`);
-            // ارسال به مسیر اصلی ورکر برای آپلود فایل
+
+            // <<< CHANGE START: اگر اطلاعات کاربر ایتا وجود داشت، آن را هم به درخواست اضافه کن
+            if (eitaaInitDataString) {
+                formData.append("eitaa_data", eitaaInitDataString);
+            }
+            // <<< CHANGE END
+
             const response = await fetch(workerUrl, { method: "POST", body: formData });
             const result = await response.json();
             if (!response.ok || result.error) throw new Error(result.details || result.error || "خطای سرور.");
@@ -272,8 +275,13 @@ document.addEventListener('DOMContentLoaded', function () {
             outputDiv.innerHTML = `<p class="success">✅ بارگذاری موفق.</p>`;
             const downloadUrl = result.url;
             finalLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر</a>`;
-            const EitaaApp = window.Eitaa.WebApp;
-            EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true})).show();
+            
+            // <<< CHANGE START: دکمه اصلی ایتا فقط در محیط ایتا نمایش داده می‌شود
+            if (isEitaaEnv && window.Eitaa.WebApp) {
+                const EitaaApp = window.Eitaa.WebApp;
+                EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true})).show();
+            }
+            // <<< CHANGE END
             restartButton.style.display = 'inline-block';
         } catch (error) {
             outputDiv.innerHTML = `<p class="error">❌ خطا در آپلود: ${error.message}</p>`;
@@ -282,7 +290,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی (بدون تغییر) ---
+    // --- توابع کمکی ---
+    // (بقیه توابع بدون تغییر باقی می‌مانند)
     function handleFileSelect(event) {
         if (event.target.files.length === 0) return;
         const userFile = event.target.files[0];
@@ -290,7 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
         outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`;
         showFrameSelection(userFile);
     }
-
     function showFrameSelection(userFile) {
         const frameSelectionDiv = document.getElementById('frame-selection');
         frameSelectionDiv.innerHTML = '<h3>۲. انتخاب قاب</h3>';
@@ -303,7 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         frameSelectionDiv.style.display = 'block';
     }
-
     async function generatePreview(userFile, frameUrl) {
         document.getElementById('selection-area').style.display = 'none';
         outputDiv.style.display = 'block';
@@ -319,7 +326,6 @@ document.addEventListener('DOMContentLoaded', function () {
             restartButton.style.display = 'inline-block';
         }
     }
-
     function cancelPreview() {
         previewContainer.style.display = 'none';
         document.getElementById('selection-area').style.display = 'block';
@@ -330,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         finalImageBlob = null;
     }
-
     async function createFramedImage(userImageFile, frameImageUrl) {
         const ctx = canvas.getContext('2d');
         const loadImage = (src) => new Promise((resolve, reject) => {
@@ -348,9 +353,9 @@ document.addEventListener('DOMContentLoaded', function () {
             canvas.width = size; canvas.height = size;
             const userAspect = userImg.width / userImg.height;
             let sx, sy, sWidth, sHeight;
-            if (userAspect > 1) { // Landscape
+            if (userAspect > 1) { 
                 sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0;
-            } else { // Portrait or Square
+            } else { 
                 sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2;
             }
             ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
@@ -360,9 +365,8 @@ document.addEventListener('DOMContentLoaded', function () {
             URL.revokeObjectURL(userImageUrl);
         }
     }
-
-    
     function resetApp() {
+        // هنگام ریست، اطلاعات کاربر ایتا را پاک نمی‌کنیم تا اگر خواست عکس دیگری بسازد، دوباره لاگ شود
         finalImageBlob = null;
         if (document.getElementById('preview-image').src) {
             URL.revokeObjectURL(document.getElementById('preview-image').src);
@@ -384,3 +388,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+</body>
+</html>
