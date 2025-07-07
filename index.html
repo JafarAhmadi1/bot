@@ -53,12 +53,9 @@
             </p>
             
             <div class="button-container">
-                <!-- دکمه "بله" که با جاوااسکریپت کنترل می‌شود -->
                 <button id="open-web-version-btn" class="action-button">بله</button>
                 <button id="continue-no-btn" class="action-button secondary-button">خیر</button>
             </div>
-             <!-- متن کمکی برای مواقعی که حتی متد رسمی هم کار نمی‌کند (گوشی‌های خیلی قدیمی) -->
-<!--             <p class="fallback-link">اگر دکمه "بله" کار نکرد، لینک زیر را کپی کرده و در مرورگر باز کنید:<br><code>https://jafarahmadi1.github.io/bot/</code></p> -->
         </div>
 
         <div id="main-app-container" style="display: none;">
@@ -89,17 +86,21 @@
         </div>
     </div>
 
+
+
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // --- مقادیر ثابت ---
-    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/";
+    const workerUrl = "https://eite2bale.jafar-ahmadi658.workers.dev/"; // آدرس ورکر شما
     const webAppUrl = "https://jafarahmadi1.github.io/bot/";
-        const FRAMES_DATA = [
-    { label: "🖼️ قاب ۱", url: "frames/Parcham_Frame_1.png" },
-    { label: "🖼️ قاب ۲", url: "frames/Parcham_Frame_2.png" },
-    { label: "🖼️ قاب ۳", url: "frames/Parcham_Frame_3.png" },
-    { label: "🏴 قاب محرم", url: "frames/Parcham_Bala_M3.png" }
-];
+    const FRAMES_DATA = [
+        { label: "🖼️ قاب ۱", url: "frames/Parcham_Frame_1.png" },
+        { label: "🖼️ قاب ۲", url: "frames/Parcham_Frame_2.png" },
+        { label: "🖼️ قاب ۳", url: "frames/Parcham_Frame_3.png" },
+        { label: "🏴 قاب محرم", url: "frames/Parcham_Bala_M3.png" }
+    ];
 
     // --- دسترسی به عناصر ---
     const fileInput = document.getElementById('fileInput');
@@ -112,9 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const initialChoiceContainer = document.getElementById('initial-choice-container');
     const mainAppContainer = document.getElementById('main-app-container');
     const continueNoBtn = document.getElementById('continue-no-btn');
-    const openWebVersionBtn = document.getElementById('open-web-version-btn'); // دکمه جدید
-    
-    // --- عناصر شمارنده ---
+    const openWebVersionBtn = document.getElementById('open-web-version-btn');
     const statsContainer = document.getElementById('stats-container');
     const webCounterContainer = document.getElementById('web-counter-container');
     const totalCounterContainer = document.getElementById('total-counter-container');
@@ -190,6 +189,36 @@ document.addEventListener('DOMContentLoaded', function () {
     confirmUploadBtn.addEventListener('click', handleConfirmUpload);
     document.getElementById('cancel-preview-btn').addEventListener('click', cancelPreview);
 
+    // --- [جدید] تابع ارسال اطلاعات کاربر به ورکر ---
+    async function sendUserInfoToWorker() {
+        // این تابع فقط در محیط ایتا اجرا می‌شود
+        if (!isEitaaEnv) return;
+
+        try {
+            const user = window.Eitaa.WebApp.initDataUnsafe?.user;
+            if (!user) {
+                console.log("اطلاعات کاربری ایتا برای ثبت یافت نشد.");
+                return;
+            }
+
+            // ارسال اطلاعات کاربر به اندپوینت جدید در ورکر
+            const response = await fetch(`${workerUrl}log-user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            });
+
+            if(response.ok) {
+                 console.log("اطلاعات کاربر با موفقیت برای ثبت ارسال شد.");
+            } else {
+                 console.error("خطا در ارسال اطلاعات کاربر به ورکر.");
+            }
+
+        } catch (error) {
+            console.error("خطای کلی در ارسال اطلاعات کاربر:", error);
+        }
+    }
+
     // --- توابع اصلی برنامه ---
     async function handleConfirmUpload() {
         previewContainer.style.display = 'none';
@@ -199,8 +228,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // ۱. ابتدا شمارنده افزایش می‌یابد
         await incrementCount();
+        
+        // ۲. [جدید] سپس اطلاعات کاربر (اگر در ایتا باشد) در پس‌زمینه ارسال می‌شود
+        sendUserInfoToWorker();
 
+        // ۳. در نهایت، فرآیند دانلود یا آپلود تصویر انجام می‌شود
         if (isEitaaEnv) {
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
@@ -225,11 +259,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function uploadBlobToBaleViaWorker(imageBlob) {
-        outputDiv.innerHTML = "⏳ در حال دریافت لینک دانلود...";
+        outputDiv.innerHTML = "⏳ در حال آپلود تصویر و دریافت لینک دانلود...";
         confirmUploadBtn.disabled = true;
         try {
             const formData = new FormData();
             formData.append("file", imageBlob, `Parcham_Bala_${Date.now()}.jpg`);
+            // ارسال به مسیر اصلی ورکر برای آپلود فایل
             const response = await fetch(workerUrl, { method: "POST", body: formData });
             const result = await response.json();
             if (!response.ok || result.error) throw new Error(result.details || result.error || "خطای سرور.");
@@ -247,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی ---
+    // --- توابع کمکی (بدون تغییر) ---
     function handleFileSelect(event) {
         if (event.target.files.length === 0) return;
         const userFile = event.target.files[0];
@@ -349,6 +384,3 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-
-</body>
-</html>
