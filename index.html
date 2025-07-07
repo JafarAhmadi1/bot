@@ -58,7 +58,7 @@
 
         <div id="main-app-container" style="display: none;">
             <div id="selection-area">
-                <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b>* و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
+                <p>سلام به پویش پرچم بالا خوش آومدید. برای حمایت از <b>ایران جان</b> و برای تزئین تصویرتون با پرچم سه رنگ ایران عزیز، لطفا تصویر پروفایلتون رو ارسال کنید.</p>
                 <div>
                     <label for="fileInput" class="action-button" id="upload-label">۱. انتخاب تصویر</label>
                     <input type="file" id="fileInput" accept="image/*">
@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
 
     // --- دسترسی به عناصر ---
-    // (بدون تغییر) ...
     const fileInput = document.getElementById('fileInput');
     const outputDiv = document.getElementById('output');
     const canvas = document.getElementById('imageCanvas');
@@ -119,18 +118,14 @@ document.addEventListener('DOMContentLoaded', function () {
     let finalImageBlob = null;
     let isEitaaEnv = false;
     let currentSource = 'web';
-    // <<< CHANGE START: متغیر جدید برای ذخیره اطلاعات کاربر ایتا
-    let eitaaInitDataString = null;
-    // <<< CHANGE END
+    let eitaaInitDataString = null; // برای نگهداری اطلاعات کاربر ایتا
 
-    // --- توابع شمارنده ---
-    // (بدون تغییر) ...
+    // --- توابع شمارنده (بدون تغییر) ---
     async function incrementCount() {
         try {
-            // <<< CHANGE START: در نسخه وب، اگر اطلاعات ایتا وجود داشت، منبع را eitaa ثبت میکنیم
+            // اگر از وب آمده ولی اطلاعات ایتا را دارد، منبع را 'eitaa' حساب میکنیم
             const sourceForCount = eitaaInitDataString ? 'eitaa' : currentSource;
             await fetch(`${workerUrl}increment?source=${sourceForCount}`, { method: 'POST' });
-            // <<< CHANGE END
             await fetchAndDisplayCounts();
         } catch (error) {
             console.error(`خطا در افزایش شمارنده برای ${currentSource}:`, error);
@@ -147,14 +142,12 @@ document.addEventListener('DOMContentLoaded', function () {
             totalCounterContainer.style.display = 'block';
             visitorCountTotalSpan.textContent = parseInt(data.total).toLocaleString('fa');
 
-            // <<< CHANGE START: نمایش آمار وب فقط اگر واقعا از وب آمده باشیم
-            if (!isEitaaEnv && !eitaaInitDataString) {
+            if (currentSource === 'web' && !eitaaInitDataString) {
                 webCounterContainer.style.display = 'block';
                 visitorCountWebSpan.textContent = parseInt(data.web).toLocaleString('fa');
             } else {
                  webCounterContainer.style.display = 'none';
             }
-            // <<< CHANGE END
         } catch (error) {
             console.error("خطا در خواندن تعداد بازدید:", error);
             visitorCountTotalSpan.textContent = 'نامشخص';
@@ -163,26 +156,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- تشخیص محیط و نمایش اولیه ---
-    // <<< CHANGE START: بررسی پارامتر URL در ابتدای بارگذاری
     const urlParams = new URLSearchParams(window.location.search);
     const eitaaDataFromUrl = urlParams.get('eitaa_data');
     if (eitaaDataFromUrl) {
-        eitaaInitDataString = eitaaDataFromUrl;
+        eitaaInitDataString = decodeURIComponent(eitaaDataFromUrl);
     }
-    // <<< CHANGE END
-
+    
     if (window.Eitaa && window.Eitaa.WebApp && window.Eitaa.WebApp.platform && window.Eitaa.WebApp.platform !== 'unknown') {
         isEitaaEnv = true;
         currentSource = 'eitaa';
         window.Eitaa.WebApp.ready();
         window.Eitaa.WebApp.expand();
-        // <<< CHANGE START: اگر از وب‌اپ ایتا به نسخه وب هدایت شده باشیم، دیگر صفحه انتخاب را نشان نده
-        if (eitaaInitDataString) {
-             mainAppContainer.style.display = 'block';
-        } else {
-            initialChoiceContainer.style.display = 'block';
-        }
-        // <<< CHANGE END
+        initialChoiceContainer.style.display = 'block';
     } else {
         isEitaaEnv = false;
         currentSource = 'web';
@@ -192,17 +177,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- رویدادها ---
     openWebVersionBtn.addEventListener('click', function() {
-        if (window.Eitaa && window.Eitaa.WebApp) {
-            // <<< CHANGE START: خواندن اطلاعات کاربر و افزودن به URL
+        if (isEitaaEnv && window.Eitaa.WebApp) {
             const initData = window.Eitaa.WebApp.initData;
-            if (initData) {
-                const finalUrl = `${webAppUrl}?eitaa_data=${encodeURIComponent(initData)}`;
-                window.Eitaa.WebApp.openLink(finalUrl);
-            } else {
-                // اگر به هر دلیلی اطلاعات در دسترس نبود، به همان نسخه وب بدون اطلاعات برو
-                window.Eitaa.WebApp.openLink(webAppUrl);
-            }
-            // <<< CHANGE END
+            const finalUrl = `${webAppUrl}?eitaa_data=${encodeURIComponent(initData)}`;
+            window.Eitaa.WebApp.openLink(finalUrl);
         }
     });
     
@@ -227,19 +205,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         await incrementCount();
 
-        // <<< CHANGE START: بررسی اینکه آیا از داخل ایتا هستیم یا از نسخه وب (با اطلاعات ایتا)
-        if (isEitaaEnv || eitaaInitDataString) {
-            // در هر دو حالت (داخل ایتا یا وب با اطلاعات ایتا)، به ورکر آپلود می‌کنیم
+        // **منطق کلیدی و اصلاح شده**
+        if (isEitaaEnv) {
+            // حالت ۱: کاربر در محیط ایتا است. عکس را به ورکر بفرست تا در بله آپلود شود.
             uploadBlobToBaleViaWorker(finalImageBlob);
         } else {
-            // فقط اگر کاربر وب معمولی بود، مستقیم دانلود می‌کند
+            // حالت ۲ و ۳: کاربر در مرورگر وب است (چه عادی چه آمده از ایتا).
+            // عکس را مستقیماً دانلود کن.
             downloadBlobDirectly(finalImageBlob);
-        }
-        // <<< CHANGE END
-    }
 
+            // و اگر از ایتا آمده بود، اطلاعاتش را برای لاگ فرستادن به ورکر ارسال کن.
+            if (eitaaInitDataString) {
+                sendEitaaDataForLogging(eitaaInitDataString);
+            }
+        }
+    }
+    
+    // این تابع بدون تغییر باقی میماند
     function downloadBlobDirectly(blob) {
-        // (بدون تغییر) ...
         try {
             const fileName = `Parcham_Bala_${Date.now()}.jpg`;
             const url = URL.createObjectURL(blob);
@@ -254,34 +237,27 @@ document.addEventListener('DOMContentLoaded', function () {
             outputDiv.innerHTML = `<p class="error">❌ خطا در دانلود: ${error.message}</p>`;
         }
     }
-
+    
+    // این تابع هم بدون تغییر باقی میماند و فقط در محیط ایتا فراخوانی میشود
     async function uploadBlobToBaleViaWorker(imageBlob) {
         outputDiv.innerHTML = "⏳ در حال دریافت لینک دانلود...";
         confirmUploadBtn.disabled = true;
         try {
             const formData = new FormData();
             formData.append("file", imageBlob, `Parcham_Bala_${Date.now()}.jpg`);
-
-            // <<< CHANGE START: اگر اطلاعات کاربر ایتا وجود داشت، آن را هم به درخواست اضافه کن
-            if (eitaaInitDataString) {
-                formData.append("eitaa_data", eitaaInitDataString);
-            }
-            // <<< CHANGE END
-
+            
+            // در این حالت نیازی به ارسال اطلاعات کاربر نیست چون داخل محیط ایتا هستیم
+            // و فقط عکس را برای آپلود به اندپوینت اصلی میفرستیم
             const response = await fetch(workerUrl, { method: "POST", body: formData });
+            
             const result = await response.json();
             if (!response.ok || result.error) throw new Error(result.details || result.error || "خطای سرور.");
             
             outputDiv.innerHTML = `<p class="success">✅ بارگذاری موفق.</p>`;
             const downloadUrl = result.url;
             finalLinkContainer.innerHTML = `<a href="${downloadUrl}" target="_blank" class="action-button">📥 دانلود تصویر</a>`;
-            
-            // <<< CHANGE START: دکمه اصلی ایتا فقط در محیط ایتا نمایش داده می‌شود
-            if (isEitaaEnv && window.Eitaa.WebApp) {
-                const EitaaApp = window.Eitaa.WebApp;
-                EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true})).show();
-            }
-            // <<< CHANGE END
+            const EitaaApp = window.Eitaa.WebApp;
+            EitaaApp.MainButton.setText("دانلود تصویر").onClick(() => EitaaApp.openLink(downloadUrl, {try_instant_view: true})).show();
             restartButton.style.display = 'inline-block';
         } catch (error) {
             outputDiv.innerHTML = `<p class="error">❌ خطا در آپلود: ${error.message}</p>`;
@@ -290,103 +266,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- توابع کمکی ---
-    // (بقیه توابع بدون تغییر باقی می‌مانند)
-    function handleFileSelect(event) {
-        if (event.target.files.length === 0) return;
-        const userFile = event.target.files[0];
-        document.getElementById('upload-label').style.display = 'none';
-        outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`;
-        showFrameSelection(userFile);
-    }
-    function showFrameSelection(userFile) {
-        const frameSelectionDiv = document.getElementById('frame-selection');
-        frameSelectionDiv.innerHTML = '<h3>۲. انتخاب قاب</h3>';
-        FRAMES_DATA.forEach(frame => {
-            const button = document.createElement('button');
-            button.innerText = frame.label;
-            button.className = 'action-button';
-            button.onclick = () => generatePreview(userFile, frame.url);
-            frameSelectionDiv.appendChild(button);
-        });
-        frameSelectionDiv.style.display = 'block';
-    }
-    async function generatePreview(userFile, frameUrl) {
-        document.getElementById('selection-area').style.display = 'none';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = "⏳ در حال ساخت ‌تصویر نهایی...";
+    // <<< تابع جدید برای ارسال اطلاعات کاربر به ورکر جهت لاگ شدن >>>
+    async function sendEitaaDataForLogging(dataString) {
+        console.log("در حال ارسال اطلاعات کاربر ایتا برای ثبت...");
         try {
-            finalImageBlob = await createFramedImage(userFile, frameUrl);
-            const previewUrl = URL.createObjectURL(finalImageBlob);
-            document.getElementById('preview-image').src = previewUrl;
-            outputDiv.style.display = 'none';
-            previewContainer.style.display = 'block';
-        } catch (error) {
-            outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
-            restartButton.style.display = 'inline-block';
-        }
-    }
-    function cancelPreview() {
-        previewContainer.style.display = 'none';
-        document.getElementById('selection-area').style.display = 'block';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>';
-        if (document.getElementById('preview-image').src) {
-            URL.revokeObjectURL(document.getElementById('preview-image').src);
-        }
-        finalImageBlob = null;
-    }
-    async function createFramedImage(userImageFile, frameImageUrl) {
-        const ctx = canvas.getContext('2d');
-        const loadImage = (src) => new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => resolve(img);
-            img.onerror = (err) => reject(new Error(" خطا در بارگذاری تصویر یا قاب."));
-            img.src = src;
-        });
-
-        const userImageUrl = URL.createObjectURL(userImageFile);
-        try {
-            const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]);
-            const size = 512;
-            canvas.width = size; canvas.height = size;
-            const userAspect = userImg.width / userImg.height;
-            let sx, sy, sWidth, sHeight;
-            if (userAspect > 1) { 
-                sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0;
-            } else { 
-                sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2;
+            // از یک اندپوینت جدید و مشخص برای این کار استفاده می‌کنیم
+            const response = await fetch(`${workerUrl}log-user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eitaa_data: dataString })
+            });
+            if (response.ok) {
+                console.log("اطلاعات کاربر با موفقیت برای ثبت ارسال شد.");
+            } else {
+                console.error("خطا در ارسال اطلاعات کاربر برای ثبت.");
             }
-            ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size);
-            ctx.drawImage(frameImg, 0, 0, size, size);
-            return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90));
-        } finally {
-            URL.revokeObjectURL(userImageUrl);
+        } catch (error) {
+            console.error("خطای شبکه هنگام ارسال اطلاعات کاربر:", error);
         }
+        // این تابع در پس‌زمینه کار می‌کند و نیازی نیست نتیجه را به کاربر نشان دهیم.
     }
-    function resetApp() {
-        // هنگام ریست، اطلاعات کاربر ایتا را پاک نمی‌کنیم تا اگر خواست عکس دیگری بسازد، دوباره لاگ شود
-        finalImageBlob = null;
-        if (document.getElementById('preview-image').src) {
-            URL.revokeObjectURL(document.getElementById('preview-image').src);
-        }
-        fileInput.value = '';
-        const selectionArea = document.getElementById('selection-area');
-        selectionArea.style.display = 'block';
-        document.getElementById('upload-label').style.display = 'inline-block';
-        document.getElementById('frame-selection').innerHTML = '';
-        document.getElementById('frame-selection').style.display = 'none';
-        previewContainer.style.display = 'none';
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>';
-        finalLinkContainer.innerHTML = '';
-        restartButton.style.display = 'none';
-        if (isEitaaEnv) {
-            window.Eitaa.WebApp.MainButton.hide();
-        }
-    }
+
+
+    // --- سایر توابع کمکی (بدون تغییر) ---
+    function handleFileSelect(event) { if (event.target.files.length === 0) return; const userFile = event.target.files[0]; document.getElementById('upload-label').style.display = 'none'; outputDiv.innerHTML = `<p>عالی! حالا یک قاب انتخاب کنید.</p>`; showFrameSelection(userFile); }
+    function showFrameSelection(userFile) { const frameSelectionDiv = document.getElementById('frame-selection'); frameSelectionDiv.innerHTML = '<h3>۲. انتخاب قاب</h3>'; FRAMES_DATA.forEach(frame => { const button = document.createElement('button'); button.innerText = frame.label; button.className = 'action-button'; button.onclick = () => generatePreview(userFile, frame.url); frameSelectionDiv.appendChild(button); }); frameSelectionDiv.style.display = 'block'; }
+    async function generatePreview(userFile, frameUrl) { document.getElementById('selection-area').style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = "⏳ در حال ساخت ‌تصویر نهایی..."; try { finalImageBlob = await createFramedImage(userFile, frameUrl); const previewUrl = URL.createObjectURL(finalImageBlob); document.getElementById('preview-image').src = previewUrl; outputDiv.style.display = 'none'; previewContainer.style.display = 'block'; } catch (error) { outputDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`; restartButton.style.display = 'inline-block'; } }
+    function cancelPreview() { previewContainer.style.display = 'none'; document.getElementById('selection-area').style.display = 'block'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>یک قاب دیگر انتخاب کنید.</p>'; if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); } finalImageBlob = null; }
+    async function createFramedImage(userImageFile, frameImageUrl) { const ctx = canvas.getContext('2d'); const loadImage = (src) => new Promise((resolve, reject) => { const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = () => resolve(img); img.onerror = (err) => reject(new Error(" خطا در بارگذاری تصویر یا قاب.")); img.src = src; }); const userImageUrl = URL.createObjectURL(userImageFile); try { const [userImg, frameImg] = await Promise.all([loadImage(userImageUrl), loadImage(frameImageUrl)]); const size = 512; canvas.width = size; canvas.height = size; const userAspect = userImg.width / userImg.height; let sx, sy, sWidth, sHeight; if (userAspect > 1) { sHeight = userImg.height; sWidth = sHeight; sx = (userImg.width - sWidth) / 2; sy = 0; } else { sWidth = userImg.width; sHeight = sWidth; sx = 0; sy = (userImg.height - sHeight) / 2; } ctx.drawImage(userImg, sx, sy, sWidth, sHeight, 0, 0, size, size); ctx.drawImage(frameImg, 0, 0, size, size); return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.90)); } finally { URL.revokeObjectURL(userImageUrl); } }
+    function resetApp() { finalImageBlob = null; if (document.getElementById('preview-image').src) { URL.revokeObjectURL(document.getElementById('preview-image').src); } fileInput.value = ''; const selectionArea = document.getElementById('selection-area'); selectionArea.style.display = 'block'; document.getElementById('upload-label').style.display = 'inline-block'; document.getElementById('frame-selection').innerHTML = ''; document.getElementById('frame-selection').style.display = 'none'; previewContainer.style.display = 'none'; outputDiv.style.display = 'block'; outputDiv.innerHTML = '<p>منتظر انتخاب شما...</p>'; finalLinkContainer.innerHTML = ''; restartButton.style.display = 'none'; if (isEitaaEnv) { window.Eitaa.WebApp.MainButton.hide(); } }
 });
 </script>
+
 </body>
 </html>
